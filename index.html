@@ -1,0 +1,1127 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Mot à Mot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: same phone-first app as Kegel Quest. Sticky top bar, three tabs (Today, Learn, Progress), fixed bottom bar.
+   The hero card holds the word: big letters, one dot under each sound, a bracket that blends them into the word. */
+:root{
+  --bg:#EDF3F2; --surface:#FFFFFF; --surface2:#E2ECEA; --fg:#10292F; --muted:#56706F; --line:#CFDDDB;
+  --accent:#0A8466; --accent-ink:#FFFFFF;
+  --xp:#F0A81C; --xp-ink:#3A2600;
+  --squeeze:#E4533F; --calm:#3A78D1; --flame:#F0742A;
+  --hero-bg:#12363D; --hero-fg:#EAF6F4; --hero-muted:#9CC0BC; --hero-chip:#FFFFFF1F; --hero-btn:#3BE0B0; --hero-btn-ink:#06261D;
+  --font-display:'Bricolage Grotesque','Avenir Next','Segoe UI',system-ui,sans-serif;
+  --font-body:'Figtree','Avenir Next','Segoe UI',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B191D; --surface:#132529; --surface2:#1C3238; --fg:#E6F1F0; --muted:#8CA8AC; --line:#274247;
+    --accent:#35D0A5; --accent-ink:#06231B;
+    --xp:#F4B83F; --xp-ink:#3A2600;
+    --squeeze:#FF7B6B; --calm:#6BA5F0; --flame:#FF9150;
+    --hero-bg:#17363D; --hero-fg:#EAF6F4; --hero-muted:#8FB5B1; --hero-chip:#FFFFFF1A; --hero-btn:#3BE0B0; --hero-btn-ink:#06261D;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B191D; --surface:#132529; --surface2:#1C3238; --fg:#E6F1F0; --muted:#8CA8AC; --line:#274247;
+  --accent:#35D0A5; --accent-ink:#06231B;
+  --xp:#F4B83F; --xp-ink:#3A2600;
+  --squeeze:#FF7B6B; --calm:#6BA5F0; --flame:#FF9150;
+  --hero-bg:#17363D; --hero-fg:#EAF6F4; --hero-muted:#8FB5B1; --hero-chip:#FFFFFF1A; --hero-btn:#3BE0B0; --hero-btn-ink:#06261D;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 var(--font-body);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+h1,h2,h3{font-family:var(--font-display);margin:0;line-height:1.1;text-wrap:balance}
+p{margin:0}
+.num{font-variant-numeric:tabular-nums}
+:focus-visible{outline:3px solid var(--calm);outline-offset:2px}
+svg{display:block}
+
+#app{max-width:480px;margin:0 auto;padding-inline:16px;min-height:100%}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px;background:var(--bg)}
+.brand{display:flex;align-items:center;gap:9px;font:800 20px/1 var(--font-display);letter-spacing:-.01em}
+.mark{width:24px;height:24px;border-radius:50%;border:3px solid var(--accent);display:grid;place-items:center}
+.mark i{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.chips{display:flex;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-weight:700;font-size:14px}
+.chip [data-i]{display:inline-flex}
+.chip svg{width:16px;height:16px}
+.chip.flame svg{color:var(--flame)}
+.chip.xp svg{color:var(--xp)}
+
+.view{display:flex;flex-direction:column;gap:14px;padding-bottom:110px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
+.card h2{font-size:19px}
+.kick{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.date{padding-inline:2px}
+.small-note{font-size:13px;color:var(--muted)}
+
+/* Day navigation: two small arrows around the date */
+#dateLine{flex:1;text-align:center}
+.dnav{flex:none;width:34px;height:34px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:700 20px/1 var(--font-display);display:grid;place-items:center}
+.dnav:disabled{opacity:.3;cursor:default}
+#v-today.review .card:not(.hero){display:none}
+
+/* Hero */
+.hero{background:var(--hero-bg);color:var(--hero-fg);border:0;display:flex;flex-direction:column;gap:14px;padding:20px}
+.pill{background:var(--hero-chip);padding:5px 11px;border-radius:999px;font-size:13px;font-weight:700}
+.hero-sub{color:var(--hero-muted);font-size:14px}
+.path{display:flex;gap:8px;flex-wrap:wrap}
+.pchip{border:0;border-radius:999px;padding:7px 15px;font:800 16px var(--font-display);background:var(--hero-chip);color:var(--hero-fg);display:inline-flex;align-items:center;gap:6px}
+.pchip svg{width:14px;height:14px}
+.pchip.cur{background:var(--hero-btn);color:var(--hero-btn-ink)}
+.btn{border:0;border-radius:14px;padding:13px 18px;font-weight:700;font-size:16px;line-height:1.2}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.start{background:var(--hero-btn);color:var(--hero-btn-ink);font-size:19px;padding:17px;width:100%;font-family:var(--font-display);font-weight:800}
+.btn.heroghost{background:var(--hero-chip);color:var(--hero-fg);width:100%;font-size:17px;padding:15px;font-family:var(--font-display);font-weight:800}
+.btn.main{background:var(--accent);color:var(--accent-ink);width:100%;font-size:17px;padding:15px}
+.btn.ghost{background:var(--surface2);color:var(--fg)}
+.btn.small{padding:9px 14px;font-size:14px}
+.stack{display:flex;flex-direction:column;gap:10px}
+.opts{display:flex;flex-direction:column;gap:12px}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.opt div{min-width:0;display:flex;flex-direction:column}
+.opt b{font-size:15px}
+.opt span{font-size:13px;color:var(--hero-muted)}
+.switch{flex:none;width:46px;height:28px;border-radius:999px;border:0;background:#FFFFFF33;position:relative;transition:background .2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .2s}
+.switch[aria-checked="true"]{background:var(--hero-btn)}
+.switch[aria-checked="true"]::after{transform:translateX(18px);background:var(--hero-btn-ink)}
+
+/* The word: letters, a dot per sound, a bracket that blends them */
+.wordcmp{--wc-fg:var(--hero-fg);--wc-muted:var(--hero-muted);--wc-accent:var(--hero-btn);--wc-ink:var(--hero-btn-ink);--wc-chip:var(--hero-chip)}
+.wordcmp.light{--wc-fg:var(--fg);--wc-muted:var(--muted);--wc-accent:var(--accent);--wc-ink:var(--accent-ink);--wc-chip:var(--surface2)}
+.wordrow{display:flex;justify-content:center;align-items:flex-start;gap:clamp(12px,5vw,26px);color:var(--wc-fg)}
+.unit{display:flex;flex-direction:column;align-items:center;gap:2px}
+.letters{font:800 clamp(76px,27vw,120px)/1 var(--font-display);font-size:calc(clamp(76px,27vw,120px)*var(--k,1));letter-spacing:-.02em}
+.wordcmp.compact .letters{font-size:calc(clamp(54px,18vw,80px)*var(--k,1))}
+.dotline{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:38px}
+.unit.multi .dotline::before{content:"";position:absolute;left:4%;right:4%;top:50%;height:3px;margin-top:-1.5px;background:var(--wc-muted);border-radius:99px;opacity:.55}
+.dot{pointer-events:none;position:relative;z-index:1;width:26px;height:26px;padding:0;border-radius:50%;border:3px solid var(--wc-muted);background:transparent;transition:transform .15s,background .15s,border-color .15s,box-shadow .15s}
+.dot::before{content:"";position:absolute;inset:-12px}
+.dot.on{background:var(--wc-accent);border-color:var(--wc-accent);transform:scale(1.35);box-shadow:0 0 0 7px color-mix(in srgb,var(--wc-accent) 28%,transparent)}
+.dot.done{border-color:var(--wc-accent);background:color-mix(in srgb,var(--wc-accent) 35%,transparent)}
+.say{font:600 15px var(--font-body);color:var(--wc-muted);min-height:20px}
+.blendwrap{display:flex;flex-direction:column;align-items:center;margin-top:2px}
+.bracket{width:76%;height:14px;border:3px solid var(--wc-muted);border-top:0;border-radius:0 0 22px 22px;opacity:.55}
+.blendbtn{margin-top:-1px;display:inline-flex;align-items:center;gap:10px;border:0;border-radius:999px;padding:9px 18px;background:var(--wc-chip);color:var(--wc-fg);transition:background .15s,color .15s,box-shadow .15s}
+.blendbtn svg{width:15px;height:15px}
+.blendbtn .bw{font:800 22px/1 var(--font-display)}
+.blendbtn .bs{font:600 15px var(--font-body);color:var(--wc-muted)}
+.blendbtn.on{background:var(--wc-accent);color:var(--wc-ink);box-shadow:0 0 0 7px color-mix(in srgb,var(--wc-accent) 28%,transparent)}
+.blendbtn.on .bs{color:var(--wc-ink)}
+.mean{text-align:center;font-size:15px}
+.mean b{font:800 20px var(--font-display)}
+
+/* Quests, week, tip */
+.quest{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
+.quest:first-of-type{border-top:0}
+.qcheck{flex:none;width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:var(--accent-ink)}
+.qcheck svg{width:16px;height:16px;opacity:0}
+.quest.done .qcheck{background:var(--accent);border-color:var(--accent)}
+.quest.done .qcheck svg{opacity:1}
+.quest.done .qname{color:var(--muted);text-decoration:line-through}
+.qname{flex:1;min-width:0;font-weight:600}
+.qxp{font-weight:700;font-size:13px;color:var(--xp-ink);background:var(--xp);padding:3px 9px;border-radius:999px}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px}
+.day{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted)}
+.dotw{width:100%;max-width:38px;aspect-ratio:1;border-radius:50%;background:var(--surface2);display:grid;place-items:center;color:var(--accent-ink)}
+.dotw svg{width:55%;height:55%;opacity:0}
+.day.done .dotw{background:var(--accent)}
+.day.done .dotw svg{opacity:1}
+.day.today .dotw{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+.tip p{margin:8px 0 14px;font-size:16px}
+.tip .btn:disabled{opacity:.55}
+
+/* Learn */
+.learn-art{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px}
+.learn-art svg{width:100%;height:auto;max-height:150px}
+.wchips{display:flex;gap:8px;flex-wrap:wrap}
+.wchip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 18px;font:800 20px var(--font-display);color:var(--fg)}
+.wchip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.lcard{display:flex;flex-direction:column;gap:12px}
+.lcard h2{font-size:24px}
+.tips{display:flex;flex-direction:column;gap:8px}
+.tiprow{display:flex;gap:12px;align-items:baseline}
+.tiprow b{font:800 22px var(--font-display);min-width:38px}
+.tiprow span{min-width:0;color:var(--muted);font-size:14px}
+.scs{display:flex;gap:8px;overflow-x:auto;padding:10px 0 4px;-webkit-overflow-scrolling:touch}
+.sc{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font:700 14px var(--font-body);color:var(--fg);white-space:nowrap}
+.sc[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.ex.playing .exfr{color:var(--accent)}
+.dfrow{display:grid;grid-template-columns:64px 1fr;gap:4px 12px;padding:10px 0;border-top:1px solid var(--line);align-items:baseline}
+.dfrow b{font:800 24px var(--font-display)}
+.dfrow .exfr{font-size:18px}
+.pq{font:800 26px/1.2 var(--font-display);margin:10px 0 12px}
+.pbtns{display:flex;gap:10px;flex-wrap:wrap}
+.pbtns .btn{flex:1;min-width:88px;background:var(--surface2);color:var(--fg);font:800 20px var(--font-display)}
+.pbtns .btn.ok{background:var(--good,#17895a);color:#fff}
+.pbtns .btn.bad{background:var(--sun,#f3ac22);color:#111}
+.pfb{margin:10px 0 0;font-size:15px;min-height:22px}
+.ex{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.exbtn{width:44px;height:44px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+.exbtn svg{width:18px;height:18px}
+.exfr{font:800 22px/1.15 var(--font-display)}
+.exen{font-size:14px;color:var(--muted)}
+
+/* Progress */
+.lvl{display:flex;align-items:center;gap:16px}
+.ringbox{position:relative;flex:none;width:104px;height:104px}
+.ringbox svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ringbox .track{stroke:var(--surface2)}
+.ringbox .fill{stroke:var(--xp);transition:stroke-dashoffset .8s ease}
+.lvnum{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.lvnum b{font:800 34px/1 var(--font-display)}
+.lvnum span{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--muted)}
+.lvl h2{font-size:26px}
+.lvl p{color:var(--muted);font-size:14px;margin-top:4px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:2px}
+.stat b{font:800 30px/1.1 var(--font-display)}
+.stat span{font-size:13px;color:var(--muted)}
+.heat{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px}
+.heat i{aspect-ratio:1;border-radius:8px;background:var(--surface2)}
+.heat i.l1{background:color-mix(in srgb,var(--accent) 50%,var(--surface2))}
+.heat i.l2{background:var(--accent)}
+.heat i.future{opacity:.35}
+.badges{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 6px;margin-top:12px}
+.bd{background:none;border:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.hex{width:100%;max-width:70px;height:auto}
+.hex path{fill:var(--surface2);stroke:var(--line);stroke-width:3}
+.hex text{font:800 19px var(--font-display);fill:var(--muted)}
+.bd.got .hex path{fill:var(--xp);stroke:var(--xp)}
+.bd.got .hex text{fill:var(--xp-ink)}
+.bd small{font-size:11px;font-weight:600;color:var(--muted);text-align:center;line-height:1.2}
+.bd.got small{color:var(--fg)}
+#bdDetail{margin-top:12px;font-size:14px;color:var(--muted);min-height:20px}
+
+/* Bottom tabs */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs div{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}
+.tab{background:none;border:0;padding:10px 8px 9px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:700;color:var(--muted)}
+.tab svg{width:24px;height:24px}
+.tab[aria-selected="true"]{color:var(--accent)}
+
+/* Overlays */
+.overlay{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(14px + env(safe-area-inset-bottom,0px))}
+.ov-in{max-width:480px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:14px}
+.big-xp{font:800 72px/1 var(--font-display);color:var(--xp);letter-spacing:-.02em}
+.big-xp small{font-size:24px;margin-left:6px;color:var(--muted)}
+.rows{list-style:none;margin:0;padding:0}
+.rows li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line)}
+.rows li:first-child{border-top:0}
+.rows b{font-variant-numeric:tabular-nums}
+.lvbar{height:12px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.lvbar i{display:block;height:100%;background:var(--xp);border-radius:99px;transition:width 1s ease}
+.banner{background:var(--xp);color:var(--xp-ink);border-radius:16px;padding:14px 16px;font:800 20px/1.2 var(--font-display)}
+.banner small{display:block;font:600 14px var(--font-body);margin-top:3px}
+.newb{display:flex;gap:10px;flex-wrap:wrap}
+.newb .bd{width:76px}
+#confetti{position:fixed;inset:0;width:100%;height:100%;z-index:70;pointer-events:none}
+.intro-art{display:grid;place-items:center;min-height:200px}
+.intro-art svg{width:min(100%,300px);height:auto}
+.intro h1{font-size:34px;letter-spacing:-.02em}
+.intro p{font-size:17px;line-height:1.5}
+.pdots{display:flex;gap:7px}
+.pdots i{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.pdots i.on{background:var(--accent);width:24px;border-radius:99px}
+.spacer{flex:1}
+.toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:80;max-width:90vw;text-align:center}
+@media (prefers-reduced-motion: reduce){
+  .ringbox .fill,.lvbar i,.dot,.blendbtn{transition:none}
+}
+</style>
+
+<div id="app">
+  <header class="top">
+    <div class="brand"><span class="mark"><i></i></span>Mot à Mot</div>
+    <div class="chips">
+      <span class="chip flame" title="Day streak"><span data-i="flame"></span><b id="chipStreak" class="num">0</b></span>
+      <span class="chip xp" title="Total XP"><span data-i="star"></span><b id="chipXp" class="num">0</b></span>
+    </div>
+  </header>
+
+  <main>
+    <section class="view" id="v-today">
+      <div class="row date">
+        <button class="dnav" id="dPrev" aria-label="Previous day">‹</button>
+        <div class="kick" id="dateLine"></div>
+        <button class="dnav" id="dNext" aria-label="Next day">›</button>
+      </div>
+      <div class="card hero">
+        <div class="row"><span class="pill" id="lessonPill">Lesson 1: Me and mine</span><span class="hero-sub num" id="wordCount"></span></div>
+        <div class="path" id="path"></div>
+        <div class="wordcmp" id="todayWord"></div>
+        <p class="mean" id="mean"></p>
+        <div class="stack">
+          <button class="btn start" id="listenBtn">Listen</button>
+          <button class="btn heroghost" id="saidBtn" disabled>I said it out loud</button>
+        </div>
+        <div class="opts">
+          <div class="opt"><div><b>Slow voice</b><span>Say the word more slowly.</span></div><button class="switch" role="switch" id="swSlow" aria-checked="false" aria-label="Slow voice"></button></div>
+          <div class="opt"><div><b>Capital letter</b><span>See it as at the start of a sentence: Je.</span></div><button class="switch" role="switch" id="swCap" aria-checked="false" aria-label="Capital letter"></button></div>
+        </div>
+        <button class="btn heroghost small" id="nativeBtn" style="font-size:15px;padding:11px">Hear it in a native voice</button>
+      </div>
+
+      <div class="card">
+        <div class="row"><h2>Daily quests</h2><span class="kick" id="questTotal"></span></div>
+        <div id="quests"></div>
+      </div>
+
+      <div class="card">
+        <div class="row"><h2>This week</h2><span class="kick num" id="weekCount"></span></div>
+        <div class="week" id="week"></div>
+      </div>
+
+      <div class="card tip">
+        <div class="kick">Tip of the day</div>
+        <p id="tipText"></p>
+        <button class="btn ghost small" id="tipBtn">Got it, +10 XP</button>
+      </div>
+    </section>
+
+    <section class="view" id="v-learn" hidden>
+      <div class="learn-art" id="learnArt"></div>
+      <div class="wchips" id="wchips"></div>
+      <div class="card lcard">
+        <div class="wordcmp light compact" id="learnWord"></div>
+        <div class="tips" id="soundTips"></div>
+      </div>
+      <div class="card lcard" id="lWhat"></div>
+      <div class="card lcard" id="lHow"></div>
+      <div class="card lcard" id="lWhy"></div>
+      <div class="card lcard" id="lReal"></div>
+      <div class="card lcard" id="lDiff"></div>
+      <div class="card lcard" id="lPractice"></div>
+    </section>
+
+    <section class="view" id="v-progress" hidden>
+      <div class="card lvl">
+        <div class="ringbox">
+          <svg viewBox="0 0 104 104" aria-hidden="true"><circle class="track" cx="52" cy="52" r="44" fill="none" stroke-width="10"/><circle class="fill" id="lvFill" cx="52" cy="52" r="44" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="276.46"/></svg>
+          <div class="lvnum"><span>LEVEL</span><b class="num" id="lvNum">1</b></div>
+        </div>
+        <div style="min-width:0"><h2 id="lvTitle">Débutant</h2><p class="num" id="lvSub"></p></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><b class="num" id="stWords">0</b><span>Words learned</span></div>
+        <div class="stat"><b class="num" id="stReps">0</b><span>Times said aloud</span></div>
+        <div class="stat"><b class="num" id="stBest">0</b><span>Best streak (days)</span></div>
+        <div class="stat"><b class="num" id="stLessons">0</b><span>Lessons finished</span></div>
+      </div>
+
+      <div class="card">
+        <div class="row"><h2>Last 5 weeks</h2><span class="kick">Mon to Sun</span></div>
+        <div class="heat" id="heat"></div>
+      </div>
+
+      <div class="card">
+        <div class="row"><h2>Badges</h2><span class="kick num" id="badgeCount"></span></div>
+        <div class="badges" id="badges"></div>
+        <div id="bdDetail">Tap a badge to see how to earn it.</div>
+      </div>
+
+      <button class="btn ghost small" id="resetBtn" style="align-self:center">Reset progress</button>
+    </section>
+  </main>
+</div>
+
+<nav class="tabs" aria-label="Sections">
+  <div role="tablist">
+    <button class="tab" role="tab" data-view="today" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>Today</button>
+    <button class="tab" role="tab" data-view="learn" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5C5.5 4.3 8.5 4.6 12 6.8c3.5-2.2 6.5-2.5 9-1.3V19c-2.5-1.2-5.5-.9-9 1.3C8.5 18.1 5.5 17.8 3 19z"/><path d="M12 6.8V20.3"/></svg>Learn</button>
+    <button class="tab" role="tab" data-view="progress" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-8M12 20V4M19 20v-5"/></svg>Progress</button>
+  </div>
+</nav>
+
+<div id="results" class="overlay" hidden><div class="ov-in" id="resIn"></div></div>
+<canvas id="confetti" hidden></canvas>
+
+<div id="intro" class="overlay intro" hidden>
+  <div class="ov-in">
+    <div class="intro-art" id="introArt"></div>
+    <h1 id="introTitle"></h1>
+    <p id="introText"></p>
+    <p class="small-note" id="introNote"></p>
+    <div class="spacer"></div>
+    <div class="pdots" id="introDots"></div>
+    <button class="btn main" id="introNext">Next</button>
+    <button class="btn ghost small" id="introSkip" style="align-self:center">Skip</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s);};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
+var AUDIO={};
+
+/* ---------- icons ---------- */
+var I={
+  flame:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.5 2c.5 3.2 4.5 5.2 4.5 10a5 5 0 0 1-10 0c0-1.8.8-3.2 2-4.2.1 1.6.9 2.7 2 3 .2-3.2-.3-5.6 1.5-8.8z"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3 6.5 7 .8-5.2 4.8 1.5 7L12 17.5 5.7 21l1.5-7L2 9.3l7-.8z"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  play:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>'
+};
+
+/* ---------- graphics ---------- */
+var T='style="font:800 88px var(--font-display);fill:var(--fg)" text-anchor="middle"';
+var ART_SEE='<svg viewBox="0 0 300 170" role="img" aria-label="The word je with a dot under each letter and a bracket joining them"><text x="124" y="92" '+T+'>j</text><text x="182" y="92" '+T+'>e</text><circle cx="124" cy="118" r="9" fill="none" style="stroke:var(--accent);stroke-width:4"/><circle cx="182" cy="118" r="9" fill="none" style="stroke:var(--accent);stroke-width:4"/><path d="M118 138V150H188V138" fill="none" style="stroke:var(--muted);stroke-width:4;stroke-linecap:round;stroke-linejoin:round"/><text x="124" y="164" text-anchor="middle" style="font:600 14px var(--font-body);fill:var(--muted)">zh</text><text x="182" y="164" text-anchor="middle" style="font:600 14px var(--font-body);fill:var(--muted)">uh</text></svg>';
+var ART_BLEND='<svg viewBox="0 0 300 120" role="img" aria-label="The sound j plus the sound e makes the word je"><circle cx="46" cy="60" r="32" style="fill:var(--surface2)"/><text x="46" y="76" text-anchor="middle" style="font:800 44px var(--font-display);fill:var(--fg)">j</text><text x="104" y="70" text-anchor="middle" style="font:800 32px var(--font-display);fill:var(--muted)">+</text><circle cx="162" cy="60" r="32" style="fill:var(--surface2)"/><text x="162" y="76" text-anchor="middle" style="font:800 44px var(--font-display);fill:var(--fg)">e</text><text x="218" y="70" text-anchor="middle" style="font:800 32px var(--font-display);fill:var(--muted)">=</text><rect x="236" y="30" width="56" height="60" rx="30" style="fill:var(--accent)"/><text x="264" y="72" text-anchor="middle" style="font:800 30px var(--font-display);fill:var(--accent-ink)">je</text></svg>';
+var ART_SAY='<svg viewBox="0 0 300 170" role="img" aria-label="A speech bubble saying Je"><path d="M60 30h180a24 24 0 0 1 24 24v52a24 24 0 0 1-24 24h-92l-34 28v-28H60a24 24 0 0 1-24-24V54a24 24 0 0 1 24-24z" style="fill:var(--accent)"/><text x="150" y="104" text-anchor="middle" style="font:800 64px var(--font-display);fill:var(--accent-ink)">Je!</text></svg>';
+
+/* ---------- content ---------- */
+var SCEN={"je":[{"t":"Morning","x":[["Je me réveille.","I wake up."],["Je me lève.","I get up."],["Je me prépare.","I get ready."]]},{"t":"At work","x":[["Je travaille.","I'm working."],["Je suis occupé.","I'm busy."],["Je termine bientôt.","I'm finishing soon."]]},{"t":"At home","x":[["Je fais le ménage.","I'm cleaning."],["Je prépare le repas.","I'm making the meal."],["Je me repose.","I'm resting."]]},{"t":"With a friend","x":[["Je suis content de te voir.","I'm happy to see you."],["Je pense à toi.","I'm thinking of you."],["Je suis d’accord.","I agree."]]},{"t":"At the shop","x":[["Je cherche un pantalon.","I'm looking for trousers."],["Je voudrais acheter ceci.","I'd like to buy this."],["Je regarde les prix.","I'm looking at the prices."]]},{"t":"Restaurant","x":[["Je voudrais un café.","I'd like a coffee."],["Je prends le menu.","I'll take the menu."],["Je vais commander.","I'm going to order."]]},{"t":"On the phone","x":[["Je t’écoute.","I'm listening."],["Je te rappelle plus tard.","I'll call you back later."],["Je n’ai pas compris.","I didn't understand."]]},{"t":"Feelings","x":[["Je suis heureux.","I'm happy."],["Je suis fatigué.","I'm tired."],["Je suis inquiet.","I'm worried."]]},{"t":"Opinions","x":[["Je pense que oui.","I think so."],["Je ne suis pas sûr.","I'm not sure."],["Je préfère rester ici.","I prefer to stay here."]]},{"t":"Plans","x":[["Je vais sortir.","I'm going out."],["Je veux apprendre le français.","I want to learn French."],["Je vais bientôt partir.","I'm leaving soon."]]}],"moi":[{"t":"Introducing yourself","x":[["Moi, c’est Paul.","I'm Paul."],["Moi, je m’appelle Marie.","My name is Marie."]]},{"t":"Opinions","x":[["Moi, je suis d’accord.","I agree."],["Moi, je préfère le thé.","I prefer tea."]]},{"t":"Restaurant","x":[["Pour moi, un café.","A coffee for me."],["C’est pour moi, s’il vous plaît.","It's for me, please."]]},{"t":"With a friend","x":[["Pense à moi.","Think of me."],["Parle-moi.","Talk to me."],["Écoute-moi.","Listen to me."]]},{"t":"At work","x":[["Moi aussi, je travaille demain.","I work tomorrow too."],["Moi, je termine à 17 heures.","I finish at 5 pm."]]},{"t":"At home","x":[["Laisse-moi tranquille.","Leave me alone."],["Attends-moi.","Wait for me."],["Aide-moi, s’il te plaît.","Help me, please."]]},{"t":"Feelings","x":[["Moi, ça me fait plaisir.","That pleases me."],["Moi, je suis triste.","I'm sad."]]},{"t":"Choosing","x":[["Moi, je prends celui-ci.","I'll take this one."],["Choisis pour moi.","Choose for me."]]},{"t":"Needs","x":[["Donne-moi de l’eau.","Give me some water."],["Apporte-moi mon sac.","Bring me my bag."]]},{"t":"Preferences","x":[["Moi, j’aime voyager.","I like travelling."],["Moi, je préfère rester chez moi.","I prefer to stay at home."]]}],"ma":[{"t":"At home","x":[["Ma maison est grande.","My house is big."],["Ma chambre est propre.","My bedroom is clean."]]},{"t":"Family","x":[["Ma mère est gentille.","My mother is kind."],["Ma sœur arrive demain.","My sister arrives tomorrow."]]},{"t":"At work","x":[["Ma collègue est absente.","My colleague is absent."],["Ma journée est chargée.","My day is full."]]},{"t":"At the shop","x":[["Ma carte est dans mon sac.","My card is in my bag."],["Ma commande est prête.","My order is ready."]]},{"t":"With a friend","x":[["Ma meilleure amie habite ici.","My best friend lives here."],["Ma porte est ouverte.","My door is open."]]},{"t":"At school","x":[["Ma classe est au premier étage.","My class is on the first floor."],["Ma professeure est gentille.","My teacher is kind."]]},{"t":"Travelling","x":[["Ma valise est lourde.","My suitcase is heavy."],["Ma réservation est confirmée.","My booking is confirmed."]]},{"t":"Feelings","x":[["Ma joie est immense.","My joy is huge."],["Ma patience a des limites.","My patience has limits."]]},{"t":"Daily life","x":[["Ma voiture est en panne.","My car has broken down."],["Ma clé est perdue.","My key is lost."]]},{"t":"Plans","x":[["Ma prochaine étape est importante.","My next step is important."],["Ma décision est prise.","My decision is made."]]}],"mon":[{"t":"At home","x":[["Mon lit est confortable.","My bed is comfortable."],["Mon salon est propre.","My living room is clean."]]},{"t":"Family","x":[["Mon père est gentil.","My father is kind."],["Mon frère est en voyage.","My brother is travelling."]]},{"t":"At work","x":[["Mon patron est absent.","My boss is absent."],["Mon bureau est rangé.","My desk is tidy."]]},{"t":"At the shop","x":[["Mon panier est plein.","My basket is full."],["Mon achat est terminé.","My purchase is done."]]},{"t":"With a friend","x":[["Mon ami arrive bientôt.","My friend arrives soon."],["Mon téléphone sonne.","My phone is ringing."]]},{"t":"At school","x":[["Mon professeur est patient.","My teacher is patient."],["Mon cahier est neuf.","My notebook is new."]]},{"t":"Travelling","x":[["Mon billet est prêt.","My ticket is ready."],["Mon passeport est dans mon sac.","My passport is in my bag."]]},{"t":"Feelings","x":[["Mon cœur bat vite.","My heart is beating fast."],["Mon moral est bon.","My mood is good."]]},{"t":"Daily life","x":[["Mon repas est prêt.","My meal is ready."],["Mon rendez-vous est à 15 heures.","My appointment is at 3 pm."]]},{"t":"Plans","x":[["Mon objectif est clair.","My goal is clear."],["Mon avenir me préoccupe.","My future worries me."]]}]};
+var DIFF=[["je", "Je parle.", "I do the action."], ["moi", "Moi, je parle. Parle-moi.", "Stress the person, or use after a verb."], ["ma", "Ma voiture. Ma sœur.", "Feminine noun."], ["mon", "Mon frère. Mon sac. Mon amie.", "Masculine noun, or feminine starting with a vowel or silent h."]];
+var PQ=[["___ suis fatigué.", ["Je", "Moi", "Ma"], 0, "“Je” is the subject of the verb suis.", ["Look at the verb “suis”. Who is doing the action: you, or something you own?", "Which word goes in front of a verb to say “I”?"]], ["C’est ___ voiture.", ["mon", "ma", "moi"], 1, "“Voiture” is a feminine noun.", ["Is “voiture” masculine or feminine? Think: une voiture.", "“Moi” is never followed by a noun. For a feminine noun, which fits: mon or ma?"]], ["Donne-___ ton stylo.", ["je", "ma", "moi"], 2, "After “donne”, we use “moi”.", ["Who should get the pen: you, the speaker? Which word means “me” after a verb?", "“Je” and “ma” can't come after “donne”. Which word means “me”?"]], ["___ frère est gentil.", ["Ma", "Mon", "Moi"], 1, "“Frère” is a masculine noun.", ["Is “frère” masculine or feminine? Think: un frère.", "For a masculine noun, which fits: ma or mon?"]], ["___, je préfère le café.", ["Moi", "Ma", "Mon"], 0, "“Moi” stresses the person here.", ["Look at what comes next: “je préfère”. Which word can start a sentence on its own to stress the person?", "“Ma” and “mon” need a noun right after them. Which word can stand alone?"]], ["C’est ___ amie.", ["ma", "mon", "moi"], 1, "“Amie” starts with a vowel, so we use “mon”.", ["“Amie” is feminine, but it starts with a vowel. Say “ma amie” out loud. Does it flow?", "Before a vowel, French uses the masculine form. Which one is it: mon or ma?"]]];
+var WORDS=[
+  {id:'je',text:'je',say:'zhuh',blend:'w_je',mean:'I',
+   units:[{l:'j',s:'s_j',say:'zh',tip:'Like the s in “measure”'},{l:'e',s:'s_e',say:'uh',tip:'A short “uh” with rounded lips'}],
+   what:'Je means “I”. It is the word you use to talk about yourself. At the start of a sentence it is written Je. Before a vowel it shortens to j’.,',
+   how:'Put je in front of a verb: je + what you do.',
+   ex:[{c:'x_je1',fr:'Je parle.',en:'I speak.',t:'Je parle.'},{c:'x_je2',fr:'Je suis ici.',en:'I am here.',t:'Je suis ici.'}],
+   why:'Je is your starting block. With je and one verb you can say who is doing what, so you can start speaking from day one.'},
+  {id:'moi',text:'moi',say:'mwah',blend:'w_moi',mean:'me',
+   units:[{l:'m',s:'s_m',say:'m',tip:'Lips together, a steady hum'},{l:'oi',s:'s_oi',say:'wah',tip:'Two letters, one sound: “wah”'}],
+   what:'Moi means “me”. It is the strong form of je, for when you want to stress yourself or after a small word like pour (for).',
+   how:'Use it alone to answer, to agree, or for emphasis. Moi, je parle means “Me, I speak”.',
+   ex:[{c:'x_moi1',fr:'Moi aussi.',en:'Me too.',t:'Moi aussi.'},{c:'x_moi2',fr:'C’est moi.',en:'It is me.',t:'C’est moi.'}],
+   why:'Moi puts you in the conversation. You can answer “who?”, say “me too”, and show what you think without building a full sentence.'},
+  {id:'mon',text:'mon',say:'mõ',blend:'w_mon',mean:'my (masculine)',
+   units:[{l:'m',s:'s_m',say:'m',tip:'Lips together, a steady hum'},{l:'on',s:'s_on',say:'õ',tip:'Nasal: let the air through your nose. Do not say the n'}],
+   what:'Mon means “my”. It goes before a masculine word.',
+   how:'mon + masculine noun. Also use mon before a feminine word that starts with a vowel sound: mon amie.',
+   ex:[{c:'x_mon1',fr:'Mon café.',en:'My coffee.',t:'Mon café.'},{c:'x_mon2',fr:'Mon ami.',en:'My friend (a man).',t:'Mon ami.'}],
+   why:'Mon lets you talk about what is yours: your things, your people, your plans. It makes a conversation personal.'},
+  {id:'ma',text:'ma',say:'mah',blend:'w_ma',mean:'my (feminine)',
+   units:[{l:'m',s:'s_m',say:'m',tip:'Lips together, a steady hum'},{l:'a',s:'s_a',say:'ah',tip:'An open “ah”'}],
+   what:'Ma means “my”. It goes before a feminine word.',
+   how:'ma + feminine noun. The word after decides: café is masculine so mon café, maison is feminine so ma maison. Learn each noun with its mon or ma.',
+   ex:[{c:'x_ma1',fr:'Ma maison.',en:'My house.',t:'Ma maison.'},{c:'x_ma2',fr:'Ma sœur.',en:'My sister.',t:'Ma sœur.'}],
+   why:'Ma completes the pair. With mon and ma you can say “my” in French, the first step to talking about your own life.'}
+];
+/* One lesson per day, in order. To add a lesson: push a new array of 4 words (same shape as WORDS) and a title. */
+
+/* ---------- Lesson 2: tu, toi, ta, ton ---------- */
+var WORDS2=[
+  {id:'tu',text:'tu',say:'tü',blend:'w_tu',mean:'you (informal)',
+   units:[{l:'t',s:'s_t',say:'t',tip:'Tongue behind your top teeth, with no puff of air'},{l:'u',s:'s_u',say:'ü',tip:'Say “ee” and round your lips as for “oo”'}],
+   what:'Tu means “you”. It is the word you use to talk to one person you know well: a friend, a child, family. It does the action of the verb.',
+   how:'Put tu in front of a verb: tu + what the person does.',
+   ex:[{c:'x_tu1',fr:'Tu parles.',en:'You speak.',t:'Tu parles.'},{c:'x_tu2',fr:'Tu es gentil.',en:'You are kind.',t:'Tu es gentil.'}],
+   why:'Tu lets you speak directly to someone. With tu and one verb you can ask, check and chat, so a real conversation can start.'},
+  {id:'toi',text:'toi',say:'twah',blend:'w_toi',mean:'you',
+   units:[{l:'t',s:'s_t',say:'t',tip:'Tongue behind your top teeth, with no puff of air'},{l:'oi',s:'s_oi',say:'wah',tip:'Two letters, one sound: “wah”'}],
+   what:'Toi means “you”. It is the strong form of tu, for when you want to stress the person, or after a small word like avec (with) or pour (for).',
+   how:'Use it alone to ask back, or after a word like avec, pour or à. Et toi ? means “And you?”.',
+   ex:[{c:'x_toi1',fr:'Et toi ?',en:'And you?',t:'Et toi ?'},{c:'x_toi2',fr:'Je viens avec toi.',en:'I am coming with you.',t:'Je viens avec toi.'}],
+   why:'Toi turns the conversation back to the other person. You can ask “and you?”, do things with someone, and show you care.'},
+  {id:'ton',text:'ton',say:'tõ',blend:'w_ton',mean:'your (masculine)',
+   units:[{l:'t',s:'s_t',say:'t',tip:'Tongue behind your top teeth, with no puff of air'},{l:'on',s:'s_on',say:'õ',tip:'Nasal: let the air through your nose. Do not say the n'}],
+   what:'Ton means “your”. It goes before a masculine word.',
+   how:'ton + masculine noun. Also use ton before a feminine word that starts with a vowel sound: ton amie.',
+   ex:[{c:'x_ton1',fr:'Ton café.',en:'Your coffee.',t:'Ton café.'},{c:'x_ton2',fr:'Ton amie.',en:'Your friend (a woman).',t:'Ton amie.'}],
+   why:'Ton lets you talk about what belongs to the other person: their things, their people, their plans.'},
+  {id:'ta',text:'ta',say:'tah',blend:'w_ta',mean:'your (feminine)',
+   units:[{l:'t',s:'s_t',say:'t',tip:'Tongue behind your top teeth, with no puff of air'},{l:'a',s:'s_a',say:'ah',tip:'An open “ah”'}],
+   what:'Ta means “your”. It goes before a feminine word.',
+   how:'ta + feminine noun. The word after decides: café is masculine so ton café, maison is feminine so ta maison. Learn each noun with its ton or ta.',
+   ex:[{c:'x_ta1',fr:'Ta maison.',en:'Your house.',t:'Ta maison.'},{c:'x_ta2',fr:'Ta sœur.',en:'Your sister.',t:'Ta sœur.'}],
+   why:'Ta completes the pair. With ton and ta you can say “your” in French and talk about the other person’s life.'}
+];
+var SCEN2={"tu":[{"t":"Morning","x":[["Tu te réveilles.","You wake up."],["Tu te lèves tôt.","You get up early."],["Tu prends ton petit-déjeuner.","You have your breakfast."]]},{"t":"At work","x":[["Tu travailles aujourd’hui.","You're working today."],["Tu as beaucoup de travail.","You have a lot of work."],["Tu termines à quelle heure ?","What time do you finish?"]]},{"t":"At home","x":[["Tu fais le ménage.","You're cleaning."],["Tu prépares le repas.","You're making the meal."],["Tu te reposes.","You're resting."]]},{"t":"With a friend","x":[["Tu me fais rire.","You make me laugh."],["Tu es gentil.","You're kind."],["Tu viens avec moi ?","Are you coming with me?"]]},{"t":"At the shop","x":[["Tu cherches quelque chose ?","Are you looking for something?"],["Tu veux acheter quoi ?","What do you want to buy?"],["Tu as assez d’argent ?","Do you have enough money?"]]},{"t":"Restaurant","x":[["Tu veux boire quoi ?","What do you want to drink?"],["Tu prends un café ?","Are you having a coffee?"],["Tu as faim ?","Are you hungry?"]]},{"t":"On the phone","x":[["Tu m’entends ?","Can you hear me?"],["Tu peux me rappeler ?","Can you call me back?"],["Tu es disponible ?","Are you available?"]]},{"t":"Feelings","x":[["Tu es heureux.","You're happy."],["Tu as l’air triste.","You look sad."],["Tu es inquiet ?","Are you worried?"]]},{"t":"Opinions","x":[["Tu as raison.","You're right."],["Tu penses quoi ?","What do you think?"],["Tu es d’accord avec moi ?","Do you agree with me?"]]},{"t":"Plans","x":[["Tu vas sortir ce soir ?","Are you going out tonight?"],["Tu veux apprendre le français ?","Do you want to learn French?"],["Tu pars quand ?","When are you leaving?"]]}],
+"toi":[{"t":"Introducing yourself","x":[["Et toi ?","And you?"],["Comment tu t’appelles, toi ?","And what's your name?"]]},{"t":"Opinions","x":[["Et toi, qu’est-ce que tu en penses ?","And you, what do you think?"],["C’est à toi de choisir.","It's up to you to choose."]]},{"t":"Restaurant","x":[["Je viens avec toi.","I'm coming with you."],["Je commande pour toi.","I'm ordering for you."],["Cette place est pour toi.","This seat is for you."]]},{"t":"With a friend","x":[["Je pense à toi.","I'm thinking of you."],["Je compte sur toi.","I'm counting on you."],["Je suis fier de toi.","I'm proud of you."]]},{"t":"At work","x":[["Je travaille avec toi.","I'm working with you."],["Je peux compter sur toi.","I can count on you."],["Je te laisse décider, toi.","I'll let you decide."]]},{"t":"At home","x":[["Occupe-toi de toi.","Take care of yourself."],["Je m’occupe de toi.","I'm looking after you."],["Je viens chez toi.","I'm coming to your place."]]},{"t":"Feelings","x":[["Je suis content pour toi.","I'm happy for you."],["Je m’inquiète pour toi.","I'm worried about you."],["Je suis heureux de te voir, toi.","I'm happy to see you."]]},{"t":"Choosing","x":[["À toi de jouer !","Your turn to play!"],["Je préfère celui-là pour toi.","I prefer that one for you."],["C’est toi qui décides.","You're the one who decides."]]},{"t":"Asking for help","x":[["Je compte sur toi.","I'm counting on you."],["Je peux venir chez toi ?","Can I come to your place?"],["Je peux rester avec toi ?","Can I stay with you?"]]},{"t":"Plans","x":[["Je veux voyager avec toi.","I want to travel with you."],["Je veux parler avec toi.","I want to talk with you."],["Je veux réussir avec toi.","I want to succeed with you."]]}],
+"ta":[{"t":"At home","x":[["Ta chambre est propre.","Your bedroom is clean."],["Ta maison est grande.","Your house is big."],["Ta porte est ouverte.","Your door is open."]]},{"t":"Family","x":[["Ta mère va bien ?","Is your mother well?"],["Ta sœur arrive demain.","Your sister arrives tomorrow."],["Ta famille est gentille.","Your family is kind."]]},{"t":"At work","x":[["Ta collègue est absente.","Your colleague is absent."],["Ta journée se passe bien ?","Is your day going well?"],["Ta réunion commence bientôt.","Your meeting starts soon."]]},{"t":"At the shop","x":[["Ta carte est dans ton sac.","Your card is in your bag."],["Ta commande est prête.","Your order is ready."],["Ta facture est payée.","Your invoice is paid."]]},{"t":"With a friend","x":[["Ta meilleure amie est là.","Your best friend is here."],["Ta présence me fait plaisir.","Your presence pleases me."],["Ta visite me rend heureux.","Your visit makes me happy."]]},{"t":"At school","x":[["Ta classe est grande.","Your class is big."],["Ta professeure est gentille.","Your teacher is kind."],["Ta leçon est difficile.","Your lesson is difficult."]]},{"t":"Travelling","x":[["Ta valise est lourde.","Your suitcase is heavy."],["Ta réservation est confirmée.","Your booking is confirmed."],["Ta destination est magnifique.","Your destination is beautiful."]]},{"t":"Feelings","x":[["Ta joie est contagieuse.","Your joy is contagious."],["Ta tristesse me touche.","Your sadness touches me."],["Ta patience est admirable.","Your patience is admirable."]]},{"t":"Daily life","x":[["Ta voiture est en panne.","Your car has broken down."],["Ta clé est perdue.","Your key is lost."],["Ta journée a été longue.","Your day was long."]]},{"t":"Plans","x":[["Ta décision est importante.","Your decision is important."],["Ta prochaine étape est claire.","Your next step is clear."],["Ta réussite me fait plaisir.","Your success pleases me."]]}],
+"ton":[{"t":"At home","x":[["Ton lit est confortable.","Your bed is comfortable."],["Ton salon est propre.","Your living room is clean."],["Ton appartement est lumineux.","Your flat is bright."]]},{"t":"Family","x":[["Ton père est gentil.","Your father is kind."],["Ton frère est drôle.","Your brother is funny."],["Ton cousin arrive demain.","Your cousin arrives tomorrow."]]},{"t":"At work","x":[["Ton patron est absent.","Your boss is absent."],["Ton bureau est rangé.","Your desk is tidy."],["Ton travail est intéressant.","Your job is interesting."]]},{"t":"At the shop","x":[["Ton panier est plein.","Your basket is full."],["Ton achat est terminé.","Your purchase is done."],["Ton paiement est accepté.","Your payment is accepted."]]},{"t":"With a friend","x":[["Ton ami est sympathique.","Your friend is nice."],["Ton message m’a fait plaisir.","Your message pleased me."],["Ton appel m’a surpris.","Your call surprised me."]]},{"t":"At school","x":[["Ton professeur est patient.","Your teacher is patient."],["Ton cahier est neuf.","Your notebook is new."],["Ton exercice est correct.","Your exercise is correct."]]},{"t":"Travelling","x":[["Ton billet est prêt.","Your ticket is ready."],["Ton passeport est dans ton sac.","Your passport is in your bag."],["Ton hôtel est bien situé.","Your hotel is well located."]]},{"t":"Feelings","x":[["Ton sourire est magnifique.","Your smile is beautiful."],["Ton courage m’impressionne.","Your courage impresses me."],["Ton bonheur compte pour moi.","Your happiness matters to me."]]},{"t":"Daily life","x":[["Ton repas est prêt.","Your meal is ready."],["Ton rendez-vous est à 15 heures.","Your appointment is at 3 pm."],["Ton téléphone sonne.","Your phone is ringing."]]},{"t":"Plans","x":[["Ton objectif est clair.","Your goal is clear."],["Ton avenir est prometteur.","Your future is promising."],["Ton projet me plaît.","I like your project."]]}]};
+for(var k2 in SCEN2){if(Object.prototype.hasOwnProperty.call(SCEN2,k2))SCEN[k2]=SCEN2[k2];}
+var DIFF2=[["tu", "Tu travailles.", "You do the action."], ["toi", "Et toi ? Je viens avec toi.", "Stress the person, or use after a word like avec or pour."], ["ta", "Ta voiture. Ta sœur.", "Feminine noun."], ["ton", "Ton frère. Ton sac. Ton amie.", "Masculine noun, or feminine starting with a vowel or silent h."]];
+var PQ2=[["___ es très gentil.", ["Tu", "Toi", "Ta"], 0, "“Tu” is the subject of the verb es.", ["Look at the verb “es”. Who is doing the action: the person, or something they own?", "Which word goes in front of a verb to say “you”?"]], ["Je viens avec ___.", ["tu", "toi", "ton"], 1, "After “avec”, we use “toi”.", ["Who are you coming with? Which word means “you” after a small word like avec?", "“Tu” is the subject of a verb. “Ton” needs a noun. Which one is left?"]], ["C’est ___ voiture.", ["ton", "ta", "toi"], 1, "“Voiture” is a feminine noun.", ["Is “voiture” masculine or feminine? Think: une voiture.", "“Toi” is never followed by a noun. For a feminine noun, which fits: ton or ta?"]], ["Où est ___ frère ?", ["ta", "toi", "ton"], 2, "“Frère” is a masculine noun.", ["Is “frère” masculine or feminine? Think: un frère.", "For a masculine noun, which fits: ta or ton?"]], ["Et ___, tu en penses quoi ?", ["toi", "ta", "ton"], 0, "“Toi” stresses the person here.", ["Look at what comes next: “tu en penses quoi”. Which word can start a sentence on its own to stress the person?", "“Ta” and “ton” need a noun right after them. Which word can stand alone?"]], ["Je connais ___ amie.", ["ta", "ton", "tu"], 1, "“Amie” starts with a vowel, so we use “ton”.", ["“Amie” is feminine, but it starts with a vowel. Say “ta amie” out loud. Does it flow?", "Before a vowel, French uses the masculine form. Which one is it: ton or ta?"]]];
+
+/* ---------- Lesson 3: il / elle, lui, nous, vous ---------- */
+var WORDS3=[
+  {id:'il',text:'il',say:'eel',blend:'w_il',mean:'he (elle = she)',
+   units:[{l:'i',s:'s_i',say:'ee',tip:'A bright “ee”, lips spread'},{l:'l',s:'s_l',say:'l',tip:'Tongue tip behind your top teeth'}],
+   what:'Il means “he”. Elle means “she”. They are the words you use to talk about one other person. At the start of a sentence they are written Il and Elle.',
+   how:'Put il or elle in front of a verb: il + what he does, elle + what she does. The verb is the same for both: il parle, elle parle.',
+   ex:[{c:'x_il1',fr:'Il parle.',en:'He speaks.',t:'Il parle.'},{c:'x_il2',fr:'Elle parle.',en:'She speaks.',t:'Elle parle.'}],
+   why:'Il and elle let you talk about someone who is not in the room. With one of them and one verb you can say who does what.'},
+  {id:'lui',text:'lui',say:'lwee',blend:'w_lui',mean:'him',
+   units:[{l:'l',s:'s_l',say:'l',tip:'Tongue tip behind your top teeth'},{l:'ui',s:'s_ui',say:'wee',tip:'Two letters, one quick sound: “wee”'}],
+   what:'Lui means “him”. It is the strong form of il, for when you want to stress him, or after a small word like avec (with) or pour (for). Before a verb it also means “to him” or “to her”.',
+   how:'Use it alone to point at someone, or after avec, pour or à. Lui, c’est mon frère means “That is my brother”. Before a verb: je lui parle means “I talk to him (or her)”.',
+   ex:[{c:'x_lui1',fr:'Je viens avec lui.',en:'I am coming with him.',t:'Je viens avec lui.'},{c:'x_lui2',fr:'Je lui parle.',en:'I talk to him (or her).',t:'Je lui parle.'}],
+   why:'Lui puts the other person in the spotlight. You can do things with him, think of him, and talk to him or her.'},
+  {id:'nous',text:'nous',say:'noo',blend:'w_nous',mean:'we, us',
+   units:[{l:'n',s:'s_n',say:'n',tip:'Tongue behind your top teeth, a steady hum'},{l:'ous',s:'s_ous',say:'oo',tip:'Say “oo”. The s is silent'}],
+   what:'Nous means “we” and also “us”. It is for you and one or more other people.',
+   how:'Use nous + verb for “we”: nous parlons. Use nous alone after avec or pour for “us”: avec nous.',
+   ex:[{c:'x_nous1',fr:'Nous parlons.',en:'We speak.',t:'Nous parlons.'},{c:'x_nous2',fr:'Viens avec nous.',en:'Come with us.',t:'Viens avec nous.'}],
+   why:'Nous brings people together. You can talk about what you do as a group, and invite others to join you.'},
+  {id:'vous',text:'vous',say:'voo',blend:'w_vous',mean:'you (formal or plural)',
+   units:[{l:'v',s:'s_v',say:'v',tip:'Top teeth on your bottom lip, and let it buzz'},{l:'ous',s:'s_ous',say:'oo',tip:'Say “oo”. The s is silent'}],
+   what:'Vous means “you”. Use it to talk to several people, or politely to one person you do not know well. It is also the word for “you” after avec or pour.',
+   how:'Use vous + verb: vous parlez. After avec or pour it does not change: avec vous.',
+   ex:[{c:'x_vous1',fr:'Vous parlez.',en:'You speak.',t:'Vous parlez.'},{c:'x_vous2',fr:'Je viens avec vous.',en:'I am coming with you.',t:'Je viens avec vous.'}],
+   why:'Vous is your polite key. With it you can speak to a group, to a shop assistant or to a stranger, and sound respectful.'}
+];
+var SCEN3={"il":[{"t":"Morning","x":[["Il se réveille.","He wakes up."],["Elle se lève tôt.","She gets up early."],["Il prend son petit-déjeuner.","He has his breakfast."]]},{"t":"At work","x":[["Il travaille aujourd’hui.","He's working today."],["Elle a beaucoup de travail.","She has a lot of work."],["Il termine à 17 heures.","He finishes at 5 pm."]]},{"t":"At home","x":[["Elle fait le ménage.","She's cleaning."],["Il prépare le repas.","He's making the meal."],["Elle se repose.","She's resting."]]},{"t":"With a friend","x":[["Il me fait rire.","He makes me laugh."],["Elle est gentille.","She's kind."],["Il vient avec moi.","He's coming with me."]]},{"t":"At the shop","x":[["Elle cherche quelque chose.","She's looking for something."],["Il veut acheter ça.","He wants to buy this."],["Elle a assez d’argent.","She has enough money."]]},{"t":"Restaurant","x":[["Il prend un café.","He's having a coffee."],["Elle veut boire de l’eau.","She wants some water."],["Il a faim.","He's hungry."]]},{"t":"On the phone","x":[["Il m’appelle.","He's calling me."],["Elle ne répond pas.","She isn't answering."],["Il est disponible.","He's available."]]},{"t":"Feelings","x":[["Il est heureux.","He's happy."],["Elle a l’air triste.","She looks sad."],["Il est inquiet.","He's worried."]]},{"t":"Opinions","x":[["Il a raison.","He's right."],["Elle pense que oui.","She thinks so."],["Il est d’accord.","He agrees."]]},{"t":"Plans","x":[["Il va sortir ce soir.","He's going out tonight."],["Elle veut apprendre le français.","She wants to learn French."],["Il part demain.","He's leaving tomorrow."]]}],
+"lui":[{"t":"Introducing","x":[["Lui, c’est mon frère.","That's my brother."],["Lui, c’est Paul.","That's Paul."]]},{"t":"Opinions","x":[["Lui, il est d’accord.","He agrees."],["Lui, il préfère le thé.","He prefers tea."]]},{"t":"Restaurant","x":[["Je viens avec lui.","I'm coming with him."],["Je commande pour lui.","I'm ordering for him."],["Cette place est pour lui.","This seat is for him."]]},{"t":"With a friend","x":[["Je pense à lui.","I'm thinking of him."],["Je compte sur lui.","I'm counting on him."],["Je suis fier de lui.","I'm proud of him."]]},{"t":"At work","x":[["Je travaille avec lui.","I'm working with him."],["Je peux compter sur lui.","I can count on him."],["Je lui parle demain.","I'm talking to him tomorrow."]]},{"t":"At home","x":[["Je lui prépare le repas.","I'm making him the meal."],["Je m’occupe de lui.","I'm looking after him."],["Je viens chez lui.","I'm coming to his place."]]},{"t":"Feelings","x":[["Je suis content pour lui.","I'm happy for him."],["Je m’inquiète pour lui.","I'm worried about him."],["Je lui fais confiance.","I trust him."]]},{"t":"Choosing","x":[["À lui de jouer !","His turn to play!"],["C’est lui qui décide.","He's the one who decides."],["Je préfère celui-là pour lui.","I prefer that one for him."]]},{"t":"Asking for help","x":[["Je lui demande de l’aide.","I'm asking him for help."],["Je peux rester avec lui ?","Can I stay with him?"],["Je lui téléphone.","I'm calling him."]]},{"t":"Plans","x":[["Je veux voyager avec lui.","I want to travel with him."],["Je lui écris demain.","I'm writing to him tomorrow."],["Je veux réussir avec lui.","I want to succeed with him."]]}],
+"nous":[{"t":"Morning","x":[["Nous nous réveillons.","We wake up."],["Nous nous levons tôt.","We get up early."],["Nous prenons le petit-déjeuner.","We have breakfast."]]},{"t":"At work","x":[["Nous travaillons aujourd’hui.","We're working today."],["Nous avons beaucoup de travail.","We have a lot of work."],["Nous terminons à 17 heures.","We finish at 5 pm."]]},{"t":"At home","x":[["Nous faisons le ménage.","We're cleaning."],["Nous préparons le repas.","We're making the meal."],["Nous nous reposons.","We're resting."]]},{"t":"With a friend","x":[["Nous sommes amis.","We're friends."],["Nous venons avec toi.","We're coming with you."],["Viens avec nous.","Come with us."]]},{"t":"At the shop","x":[["Nous cherchons un cadeau.","We're looking for a gift."],["Nous voulons acheter ça.","We want to buy this."],["Nous avons assez d’argent.","We have enough money."]]},{"t":"Restaurant","x":[["Nous voudrions une table.","We'd like a table."],["Nous prenons deux cafés.","We'll have two coffees."],["Nous avons faim.","We're hungry."]]},{"t":"On the phone","x":[["Nous t’écoutons.","We're listening."],["Nous te rappelons plus tard.","We'll call you back later."],["Nous sommes disponibles.","We're available."]]},{"t":"Feelings","x":[["Nous sommes heureux.","We're happy."],["Nous sommes fatigués.","We're tired."],["Nous sommes inquiets.","We're worried."]]},{"t":"Opinions","x":[["Nous sommes d’accord.","We agree."],["Nous pensons que oui.","We think so."],["Nous préférons rester ici.","We prefer to stay here."]]},{"t":"Plans","x":[["Nous allons sortir ce soir.","We're going out tonight."],["Nous voulons apprendre le français.","We want to learn French."],["Nous partons demain.","We're leaving tomorrow."]]}],
+"vous":[{"t":"Morning","x":[["Vous vous réveillez.","You wake up."],["Vous vous levez tôt.","You get up early."],["Vous prenez votre petit-déjeuner.","You have your breakfast."]]},{"t":"At work","x":[["Vous travaillez aujourd’hui.","You're working today."],["Vous avez beaucoup de travail.","You have a lot of work."],["Vous terminez à quelle heure ?","What time do you finish?"]]},{"t":"At home","x":[["Vous faites le ménage.","You're cleaning."],["Vous préparez le repas.","You're making the meal."],["Vous vous reposez.","You're resting."]]},{"t":"With a friend","x":[["Vous êtes gentils.","You're kind."],["Vous venez avec nous ?","Are you coming with us?"],["Je viens avec vous.","I'm coming with you."]]},{"t":"At the shop","x":[["Vous cherchez quelque chose ?","Are you looking for something?"],["Vous voulez acheter quoi ?","What do you want to buy?"],["Vous avez assez d’argent ?","Do you have enough money?"]]},{"t":"Restaurant","x":[["Vous désirez ?","What would you like?"],["Vous prenez un café ?","Are you having a coffee?"],["Vous avez faim ?","Are you hungry?"]]},{"t":"On the phone","x":[["Vous m’entendez ?","Can you hear me?"],["Vous pouvez me rappeler ?","Can you call me back?"],["Vous êtes disponible ?","Are you available?"]]},{"t":"Feelings","x":[["Vous êtes heureux.","You're happy."],["Vous avez l’air fatigué.","You look tired."],["Vous êtes inquiets ?","Are you worried?"]]},{"t":"Opinions","x":[["Vous avez raison.","You're right."],["Vous pensez quoi ?","What do you think?"],["Vous êtes d’accord avec moi ?","Do you agree with me?"]]},{"t":"Plans","x":[["Vous allez sortir ce soir ?","Are you going out tonight?"],["Vous voulez apprendre le français ?","Do you want to learn French?"],["Vous partez quand ?","When are you leaving?"]]}]};
+for(var k3 in SCEN3){if(Object.prototype.hasOwnProperty.call(SCEN3,k3))SCEN[k3]=SCEN3[k3];}
+var DIFF3=[["il", "Il parle. Elle parle.", "He or she does the action."], ["lui", "Lui, il parle. Pour lui. Je lui parle.", "Stress him, or use after a word like avec or pour."], ["nous", "Nous parlons. Avec nous.", "We, or us. Same word for both."], ["vous", "Vous parlez. Avec vous.", "You: formal, or more than one person."]];
+var PQ3=[["___ travaille aujourd’hui.", ["Il", "Nous", "Vous"], 0, "“Travaille” goes with il or elle.", ["Look at the verb “travaille”. Does it end like nous travaillons or vous travaillez?", "Which word means “he” and goes in front of a verb?"]], ["Pour Paul ? Oui, c’est pour ___.", ["il", "lui", "nous"], 1, "After “pour”, we use “lui”.", ["Who is it for? Paul. Which word means “him” after a small word like pour?", "“Il” is the subject of a verb. Which word is used after pour?"]], ["___ travaillons ensemble.", ["Nous", "Vous", "Il"], 0, "The ending -ons goes with nous.", ["Look at the verb “travaillons”. Which word means “we”?", "The ending -ons is the sign of “we”. Which word is that?"]], ["___ êtes très gentils.", ["Nous", "Vous", "Lui"], 1, "“Êtes” goes with vous.", ["Look at the verb “êtes”. Think: vous êtes.", "Which word means “you” for several people, or politely?"]], ["Marie ? ___ est ma sœur.", ["Elle", "Lui", "Vous"], 0, "“Elle” means “she”, for a woman.", ["Marie is a woman. Which word means “she”?", "The verb “est” goes with il or elle. Which one is for a woman?"]], ["Je parle à Paul. Je ___ parle.", ["lui", "il", "nous"], 0, "Before the verb, “lui” means “to him”.", ["Who do you speak to? Paul. Which word means “to him”?", "“Il” does the action. Here Paul receives it. Which word fits: lui or nous?"]]];
+
+/* ---------- Lesson 4: leur, se, son, sa ---------- */
+var WORDS4=[
+  {id:'leur',text:'leur',say:'luhr',blend:'w_leur',mean:'their, to them',
+   units:[{l:'l',s:'s_l',say:'l',tip:'Tongue tip behind your top teeth'},{l:'eur',s:'s_eur',say:'uhr',tip:'Round your lips for “uh”, then a soft throaty r'}],
+   what:'Leur means “their”. It goes before a noun that belongs to several people: leur maison, leur père. Before a verb it also means “to them”: je leur parle.',
+   how:'leur + noun: leur maison. For several things, add an s: leurs amis. Before a verb, it stays leur: je leur parle means “I talk to them”.',
+   ex:[{c:'x_leur1',fr:'Leur maison.',en:'Their house.',t:'Leur maison.'},{c:'x_leur2',fr:'Je leur parle.',en:'I talk to them.',t:'Je leur parle.'}],
+   why:'Leur lets you talk about what belongs to a group, and talk to that group directly.'},
+  {id:'se',text:'se',say:'suh',blend:'w_se',mean:'himself, herself, themselves',
+   units:[{l:'s',s:'s_s',say:'s',tip:'A soft hiss, like the s in “sun”'},{l:'e',s:'s_e',say:'uh',tip:'A short “uh” with rounded lips'}],
+   what:'Se is a small word that goes before a verb when the person does the action to themselves. It means “himself”, “herself” or “themselves”. It goes with il, elle, ils and elles.',
+   how:'Put se between il or elle and the verb: il se lève means “he gets (himself) up”. Before a vowel it shortens to s’: elle s’habille.',
+   ex:[{c:'x_se1',fr:'Il se lève.',en:'He gets up.',t:'Il se lève.'},{c:'x_se2',fr:'Elle s’habille.',en:'She gets dressed.',t:'Elle s’habille.'}],
+   why:'Se opens the door to daily-routine verbs: wake up, get up, get dressed, rest. Many everyday French actions use it.'},
+  {id:'son',text:'son',say:'sõ',blend:'w_son',mean:'his, her (masculine word)',
+   units:[{l:'s',s:'s_s',say:'s',tip:'A soft hiss, like the s in “sun”'},{l:'on',s:'s_on',say:'õ',tip:'Nasal: let the air through your nose. Do not say the n'}],
+   what:'Son means “his” or “her”. It goes before a masculine word. The owner can be a man or a woman: only the word after decides.',
+   how:'son + masculine noun. Also use son before a feminine word that starts with a vowel sound: son amie.',
+   ex:[{c:'x_son1',fr:'Son café.',en:'His or her coffee.',t:'Son café.'},{c:'x_son2',fr:'Son amie.',en:'His or her friend (a woman).',t:'Son amie.'}],
+   why:'Son lets you talk about what belongs to another person: their things, their people, their plans.'},
+  {id:'sa',text:'sa',say:'sah',blend:'w_sa',mean:'his, her (feminine word)',
+   units:[{l:'s',s:'s_s',say:'s',tip:'A soft hiss, like the s in “sun”'},{l:'a',s:'s_a',say:'ah',tip:'An open “ah”'}],
+   what:'Sa means “his” or “her”. It goes before a feminine word. The word after decides, not the owner: sa maison can be his house or her house.',
+   how:'sa + feminine noun. café is masculine so son café, maison is feminine so sa maison. Learn each noun with its son or sa.',
+   ex:[{c:'x_sa1',fr:'Sa maison.',en:'His or her house.',t:'Sa maison.'},{c:'x_sa2',fr:'Sa sœur.',en:'His or her sister.',t:'Sa sœur.'}],
+   why:'Sa completes the pair. With son and sa you can say “his” or “her” in French and talk about someone else’s life.'}
+];
+var SCEN4={"leur":[{"t":"At home","x":[["Leur maison est grande.","Their house is big."],["Leur chambre est propre.","Their bedroom is clean."],["Leur porte est ouverte.","Their door is open."]]},{"t":"Family","x":[["Leur mère est gentille.","Their mother is kind."],["Leur père arrive demain.","Their father arrives tomorrow."],["Leur famille est grande.","Their family is big."]]},{"t":"At work","x":[["Leur patron est absent.","Their boss is absent."],["Leur bureau est rangé.","Their desk is tidy."],["Leur travail est intéressant.","Their job is interesting."]]},{"t":"At the shop","x":[["Leur panier est plein.","Their basket is full."],["Leur commande est prête.","Their order is ready."],["Leur magasin est ouvert.","Their shop is open."]]},{"t":"With a friend","x":[["Leur ami est sympathique.","Their friend is nice."],["Je leur parle.","I'm talking to them."],["Je leur téléphone.","I'm calling them."]]},{"t":"At school","x":[["Leur professeur est patient.","Their teacher is patient."],["Leur classe est grande.","Their class is big."],["Leur leçon est difficile.","Their lesson is difficult."]]},{"t":"Travelling","x":[["Leur voyage est long.","Their trip is long."],["Leur valise est lourde.","Their suitcase is heavy."],["Leur billet est prêt.","Their ticket is ready."]]},{"t":"Feelings","x":[["Leur joie est contagieuse.","Their joy is contagious."],["Leur courage m’impressionne.","Their courage impresses me."],["Je leur fais confiance.","I trust them."]]},{"t":"Daily life","x":[["Leur voiture est en panne.","Their car has broken down."],["Leur repas est prêt.","Their meal is ready."],["Leur rendez-vous est à 15 heures.","Their appointment is at 3 pm."]]},{"t":"Plans","x":[["Leur projet est clair.","Their project is clear."],["Leur avenir est prometteur.","Their future is promising."],["Je leur écris demain.","I'm writing to them tomorrow."]]}],
+"se":[{"t":"Morning","x":[["Il se réveille.","He wakes up."],["Elle se lève tôt.","She gets up early."],["Ils se préparent.","They get ready."]]},{"t":"At work","x":[["Il se concentre.","He's concentrating."],["Elle se dépêche.","She's hurrying."],["Ils se retrouvent au bureau.","They meet up at the office."]]},{"t":"At home","x":[["Elle se repose.","She's resting."],["Il se lave les mains.","He washes his hands."],["Ils se couchent tôt.","They go to bed early."]]},{"t":"With a friend","x":[["Ils se parlent.","They talk to each other."],["Elles se voient demain.","They're meeting tomorrow."],["Ils s’amusent bien.","They're having fun."]]},{"t":"At the shop","x":[["Elle se promène.","She's strolling."],["Il s’arrête devant la vitrine.","He stops at the shop window."],["Ils se décident vite.","They decide quickly."]]},{"t":"Restaurant","x":[["Il s’assoit à la table.","He sits at the table."],["Elle se sert de l’eau.","She pours herself some water."],["Ils se régalent.","They're enjoying their food."]]},{"t":"On the phone","x":[["Il s’excuse.","He apologises."],["Elle se présente.","She introduces herself."],["Ils se rappellent.","They call each other back."]]},{"t":"Feelings","x":[["Il se sent heureux.","He feels happy."],["Elle se sent fatiguée.","She feels tired."],["Il s’inquiète.","He's worried."]]},{"t":"Opinions","x":[["Il se trompe.","He's wrong."],["Elle se souvient de tout.","She remembers everything."],["Ils se mettent d’accord.","They come to an agreement."]]},{"t":"Plans","x":[["Il se prépare à partir.","He's getting ready to leave."],["Elle s’inscrit au cours.","She's signing up for the class."],["Ils se marient demain.","They're getting married tomorrow."]]}],
+"son":[{"t":"At home","x":[["Son lit est confortable.","His or her bed is comfortable."],["Son salon est propre.","His or her living room is clean."],["Son appartement est lumineux.","His or her flat is bright."]]},{"t":"Family","x":[["Son père est gentil.","His or her father is kind."],["Son frère est drôle.","His or her brother is funny."],["Son cousin arrive demain.","His or her cousin arrives tomorrow."]]},{"t":"At work","x":[["Son patron est absent.","His or her boss is absent."],["Son bureau est rangé.","His or her desk is tidy."],["Son travail est intéressant.","His or her job is interesting."]]},{"t":"At the shop","x":[["Son panier est plein.","His or her basket is full."],["Son achat est terminé.","His or her purchase is done."],["Son paiement est accepté.","His or her payment is accepted."]]},{"t":"With a friend","x":[["Son ami est sympathique.","His or her friend is nice."],["Son message m’a fait plaisir.","His or her message pleased me."],["Son appel m’a surpris.","His or her call surprised me."]]},{"t":"At school","x":[["Son professeur est patient.","His or her teacher is patient."],["Son cahier est neuf.","His or her notebook is new."],["Son exercice est correct.","His or her exercise is correct."]]},{"t":"Travelling","x":[["Son billet est prêt.","His or her ticket is ready."],["Son passeport est dans son sac.","His or her passport is in his or her bag."],["Son hôtel est bien situé.","His or her hotel is well located."]]},{"t":"Feelings","x":[["Son sourire est magnifique.","His or her smile is beautiful."],["Son courage m’impressionne.","His or her courage impresses me."],["Son bonheur compte pour moi.","His or her happiness matters to me."]]},{"t":"Daily life","x":[["Son repas est prêt.","His or her meal is ready."],["Son rendez-vous est à 15 heures.","His or her appointment is at 3 pm."],["Son téléphone sonne.","His or her phone is ringing."]]},{"t":"Plans","x":[["Son objectif est clair.","His or her goal is clear."],["Son avenir est prometteur.","His or her future is promising."],["Son projet me plaît.","I like his or her project."]]}],
+"sa":[{"t":"At home","x":[["Sa chambre est propre.","His or her bedroom is clean."],["Sa maison est grande.","His or her house is big."],["Sa porte est ouverte.","His or her door is open."]]},{"t":"Family","x":[["Sa mère va bien ?","Is his or her mother well?"],["Sa sœur arrive demain.","His or her sister arrives tomorrow."],["Sa famille est gentille.","His or her family is kind."]]},{"t":"At work","x":[["Sa collègue est absente.","His or her colleague is absent."],["Sa journée se passe bien ?","Is his or her day going well?"],["Sa réunion commence bientôt.","His or her meeting starts soon."]]},{"t":"At the shop","x":[["Sa carte est dans son sac.","His or her card is in his or her bag."],["Sa commande est prête.","His or her order is ready."],["Sa facture est payée.","His or her invoice is paid."]]},{"t":"With a friend","x":[["Sa meilleure amie est là.","His or her best friend is here."],["Sa présence me fait plaisir.","His or her presence pleases me."],["Sa visite me rend heureux.","His or her visit makes me happy."]]},{"t":"At school","x":[["Sa classe est grande.","His or her class is big."],["Sa professeure est gentille.","His or her teacher is kind."],["Sa leçon est difficile.","His or her lesson is difficult."]]},{"t":"Travelling","x":[["Sa valise est lourde.","His or her suitcase is heavy."],["Sa réservation est confirmée.","His or her booking is confirmed."],["Sa destination est magnifique.","His or her destination is beautiful."]]},{"t":"Feelings","x":[["Sa joie est contagieuse.","His or her joy is contagious."],["Sa tristesse me touche.","His or her sadness touches me."],["Sa patience est admirable.","His or her patience is admirable."]]},{"t":"Daily life","x":[["Sa voiture est en panne.","His or her car has broken down."],["Sa clé est perdue.","His or her key is lost."],["Sa journée a été longue.","His or her day was long."]]},{"t":"Plans","x":[["Sa décision est importante.","His or her decision is important."],["Sa prochaine étape est claire.","His or her next step is clear."],["Sa réussite me fait plaisir.","His or her success pleases me."]]}]};
+for(var k4 in SCEN4){if(Object.prototype.hasOwnProperty.call(SCEN4,k4))SCEN[k4]=SCEN4[k4];}
+var DIFF4=[["leur", "Leur maison. Je leur parle.", "Their, or to them."], ["se", "Il se lève. Elle s’habille.", "Goes before the verb: himself, herself, themselves."], ["son", "Son frère. Son sac. Son amie.", "His or her: masculine noun, or feminine starting with a vowel."], ["sa", "Sa voiture. Sa sœur.", "His or her: feminine noun."]];
+var PQ4=[["Paul et Marie ont une maison. C’est ___ maison.", ["leur", "sa", "se"], 0, "Paul and Marie are two people, so “their”: leur.", ["Paul and Marie are two people. Which word means “their”?", "“Sa” is for one owner. Which word is for several people?"]], ["Il ___ lève tôt.", ["se", "son", "sa"], 0, "“Se” goes before the verb: he gets (himself) up.", ["Look at the verb “lève”. He gets himself up. Which small word goes before the verb?", "“Son” and “sa” need a noun after them. Which word fits before a verb?"]], ["Paul a un frère. C’est ___ frère.", ["sa", "son", "se"], 1, "“Frère” is a masculine noun.", ["Is “frère” masculine or feminine? Think: un frère.", "For a masculine noun, which fits: sa or son?"]], ["Marie a une voiture. C’est ___ voiture.", ["son", "sa", "se"], 1, "“Voiture” is a feminine noun.", ["Is “voiture” masculine or feminine? Think: une voiture.", "For a feminine noun, which fits: son or sa?"]], ["Je parle à mes amis. Je ___ parle.", ["leur", "se", "sa"], 0, "Before the verb, “leur” means “to them”.", ["Who do you talk to? Your friends. Which word means “to them”?", "“Se” goes with il or elle. Which word means “to them” before a verb?"]], ["Marie a une amie. C’est ___ amie.", ["sa", "son", "se"], 1, "“Amie” starts with a vowel, so we use “son”.", ["“Amie” is feminine, but it starts with a vowel. Say “sa amie” out loud. Does it flow?", "Before a vowel, French uses the masculine form. Which one is it: son or sa?"]]];
+
+/* ---------- Lesson 5: et, avec, sans, ou ---------- */
+var WORDS5=[
+  {id:'et',text:'et',say:'ay',blend:'w_et',mean:'and',
+   units:[{l:'e',s:'s_e',say:'ay',tip:'A clean “ay”, lips spread'},{l:'t',s:'s_t',say:'–',tip:'The t is silent'}],
+   what:'Et means “and”. It joins two words or two ideas: du pain et du beurre. The t is never said.',
+   how:'Put et between the two things you join: A et B. It works for things, people and actions: toi et moi, je lave et je range.',
+   ex:[{c:'x_et1',fr:'Du pain et du beurre.',en:'Bread and butter.',t:'Du pain et du beurre.'},{c:'x_et2',fr:'Toi et moi.',en:'You and me.',t:'Toi et moi.'}],
+   why:'Et lets you build longer sentences. Instead of one short idea, you can link two, and sound much more natural.'},
+  {id:'avec',text:'avec',say:'ah-vek',blend:'w_avec',mean:'with',
+   units:[{l:'a',s:'s_a',say:'ah',tip:'An open “ah”'},{l:'v',s:'s_v',say:'v',tip:'Top teeth on your bottom lip, and let it buzz'},{l:'ec',s:'s_ec',say:'ek',tip:'Say “ek”, and say the c clearly'}],
+   what:'Avec means “with”. It shows who is together, or what is used: avec toi, avec une carte.',
+   how:'avec + person or thing. After avec, use the strong words: avec moi, avec toi, avec lui, avec nous.',
+   ex:[{c:'x_avec1',fr:'Viens avec moi.',en:'Come with me.',t:'Viens avec moi.'},{c:'x_avec2',fr:'Un café avec du sucre.',en:'Coffee with sugar.',t:'Un café avec du sucre.'}],
+   why:'Avec connects you to people and things. You can invite, share and order exactly what you want.'},
+  {id:'sans',text:'sans',say:'sõ',blend:'w_sans',mean:'without',
+   units:[{l:'s',s:'s_s',say:'s',tip:'A soft hiss, like the s in “sun”'},{l:'ans',s:'s_ans',say:'ã',tip:'Nasal: let the air through your nose. The last s is silent'}],
+   what:'Sans means “without”. It is the opposite of avec: sans sucre, sans toi.',
+   how:'sans + noun or person, with no “the” or “a” in between: sans sucre, sans lait. After sans, use the strong words: sans moi, sans toi.',
+   ex:[{c:'x_sans1',fr:'Un café sans sucre.',en:'Coffee without sugar.',t:'Un café sans sucre.'},{c:'x_sans2',fr:'Je pars sans toi.',en:'I am leaving without you.',t:'Je pars sans toi.'}],
+   why:'Sans lets you say what you do not want. It is very useful in a restaurant, at the shop and when you make plans.'},
+  {id:'ou',text:'ou',say:'oo',blend:'w_ou',mean:'or',
+   units:[{l:'ou',s:'s_ou',say:'oo',tip:'Two letters, one sound: “oo”'}],
+   what:'Ou means “or”. It offers a choice: thé ou café ? Do not mix it up with où, with an accent, which means “where”.',
+   how:'Put ou between the two choices: A ou B ? It is also how you ask someone to choose.',
+   ex:[{c:'x_ou1',fr:'Thé ou café ?',en:'Tea or coffee?',t:'Thé ou café ?'},{c:'x_ou2',fr:'Oui ou non ?',en:'Yes or no?',t:'Oui ou non ?'}],
+   why:'Ou lets you offer and make a choice. With it you can ask questions and decide quickly.'}
+];
+var SCEN5={"et":[{"t":"Morning","x":[["Du pain et du beurre.","Bread and butter."],["Je me lève et je me lave.","I get up and I wash."],["Un café et un croissant.","A coffee and a croissant."]]},{"t":"At work","x":[["Je travaille et j’écris.","I'm working and writing."],["Un stylo et un cahier.","A pen and a notebook."],["Lui et moi, nous travaillons ensemble.","He and I work together."]]},{"t":"At home","x":[["Je lave et je range.","I wash and I tidy."],["La table et les chaises.","The table and the chairs."],["Je cuisine et je chante.","I cook and I sing."]]},{"t":"With a friend","x":[["Toi et moi.","You and me."],["Paul et Marie sont là.","Paul and Marie are here."],["Il est grand et gentil.","He's tall and kind."]]},{"t":"At the shop","x":[["Du lait et des œufs.","Milk and eggs."],["Une pomme et une orange.","An apple and an orange."],["Je regarde et j’achète.","I look and I buy."]]},{"t":"Restaurant","x":[["Une soupe et une salade.","A soup and a salad."],["De l’eau et du pain.","Water and bread."],["Un café et l’addition, s’il vous plaît.","A coffee and the bill, please."]]},{"t":"On the phone","x":[["Bonjour et merci.","Hello and thank you."],["J’écoute et je note.","I listen and I note."],["Je t’appelle et j’attends.","I call you and I wait."]]},{"t":"Feelings","x":[["Je suis fatigué et content.","I'm tired and happy."],["Elle est calme et heureuse.","She's calm and happy."],["Il rit et il chante.","He laughs and sings."]]},{"t":"Opinions","x":[["Tu as raison et je suis d’accord.","You're right and I agree."],["C’est simple et utile.","It's simple and useful."],["C’est beau et bon.","It's beautiful and good."]]},{"t":"Plans","x":[["Je vais sortir et marcher.","I'm going out and walking."],["Demain, j’étudie et je me repose.","Tomorrow, I study and rest."],["Nous voyageons et nous visitons.","We travel and we visit."]]}],
+"avec":[{"t":"Morning","x":[["Je déjeune avec ma famille.","I have breakfast with my family."],["Je bois du café avec du lait.","I drink coffee with milk."],["Je marche avec mon chien.","I walk with my dog."]]},{"t":"At work","x":[["Je travaille avec lui.","I'm working with him."],["Je parle avec mon patron.","I'm talking with my boss."],["Je note avec un stylo.","I write with a pen."]]},{"t":"At home","x":[["Je cuisine avec ma sœur.","I cook with my sister."],["Je regarde un film avec toi.","I watch a film with you."],["Je range avec mes enfants.","I tidy up with my children."]]},{"t":"With a friend","x":[["Viens avec moi.","Come with me."],["Je sors avec un ami.","I'm going out with a friend."],["Je rigole avec eux.","I'm laughing with them."]]},{"t":"At the shop","x":[["Je paie avec ma carte.","I pay with my card."],["Je viens avec mon sac.","I come with my bag."],["Je cherche avec l’employé.","I'm looking with the assistant."]]},{"t":"Restaurant","x":[["Un café avec du sucre.","Coffee with sugar."],["Du poulet avec du riz.","Chicken with rice."],["Je mange avec vous.","I'm eating with you."]]},{"t":"On the phone","x":[["Je parle avec toi.","I'm talking with you."],["Je reste avec toi.","I'm staying with you."],["Je suis d’accord avec lui.","I agree with him."]]},{"t":"Feelings","x":[["Je suis content avec toi.","I'm happy with you."],["Je me sens bien avec vous.","I feel good with you."],["Je souris avec plaisir.","I smile with pleasure."]]},{"t":"Opinions","x":[["Je suis d’accord avec toi.","I agree with you."],["Je ne suis pas d’accord avec lui.","I don't agree with him."],["Je parle avec honnêteté.","I speak honestly."]]},{"t":"Plans","x":[["Je voyage avec ma famille.","I'm travelling with my family."],["Je pars avec eux demain.","I'm leaving with them tomorrow."],["Je viens avec vous.","I'm coming with you."]]}],
+"sans":[{"t":"Morning","x":[["Un café sans sucre.","Coffee without sugar."],["Je sors sans manger.","I go out without eating."],["Je pars sans mon sac.","I leave without my bag."]]},{"t":"At work","x":[["Je travaille sans stress.","I work without stress."],["Il part sans dire au revoir.","He leaves without saying goodbye."],["Je réponds sans attendre.","I answer without waiting."]]},{"t":"At home","x":[["Je cuisine sans sel.","I cook without salt."],["Je range sans bruit.","I tidy up without noise."],["Je dors sans lumière.","I sleep without light."]]},{"t":"With a friend","x":[["Je ne sors pas sans toi.","I'm not going out without you."],["Elle part sans moi.","She's leaving without me."],["Je ne peux pas sans toi.","I can't without you."]]},{"t":"At the shop","x":[["Je paie sans carte.","I pay without a card."],["Je sors sans acheter.","I leave without buying."],["Je cherche sans aide.","I look without help."]]},{"t":"Restaurant","x":[["Un thé sans lait.","Tea without milk."],["Une salade sans oignons.","A salad without onions."],["Une soupe sans sel.","A soup without salt."]]},{"t":"On the phone","x":[["Il parle sans arrêt.","He talks non-stop."],["Je n’appelle pas sans raison.","I don't call without a reason."],["Je pars sans téléphone.","I leave without my phone."]]},{"t":"Feelings","x":[["Je suis sans peur.","I'm without fear."],["Elle sourit sans raison.","She smiles for no reason."],["Je me sens sans force.","I feel without strength."]]},{"t":"Opinions","x":[["Sans doute.","Without a doubt."],["Sans problème.","No problem."],["Je dis ça sans critiquer.","I say this without criticising."]]},{"t":"Plans","x":[["Je voyage sans valise.","I travel without a suitcase."],["Je pars sans retard.","I leave without delay."],["Je commence sans attendre.","I start without waiting."]]}],
+"ou":[{"t":"Morning","x":[["Thé ou café ?","Tea or coffee?"],["Pain ou céréales ?","Bread or cereal?"],["Je me douche maintenant ou plus tard ?","Do I shower now or later?"]]},{"t":"At work","x":[["Lundi ou mardi ?","Monday or Tuesday?"],["Mail ou téléphone ?","Email or phone?"],["Tu travailles ici ou chez toi ?","Do you work here or at home?"]]},{"t":"At home","x":[["Salon ou cuisine ?","Living room or kitchen?"],["Je cuisine ou tu cuisines ?","Do I cook or do you?"],["Je range ou je me repose ?","Do I tidy or do I rest?"]]},{"t":"With a friend","x":[["Toi ou moi ?","You or me?"],["Lui ou elle ?","Him or her?"],["Tu viens ou tu restes ?","Are you coming or staying?"]]},{"t":"At the shop","x":[["Celui-ci ou celui-là ?","This one or that one?"],["Petit ou grand ?","Small or big?"],["Carte ou espèces ?","Card or cash?"]]},{"t":"Restaurant","x":[["Eau ou jus ?","Water or juice?"],["Viande ou poisson ?","Meat or fish?"],["Salé ou sucré ?","Savoury or sweet?"]]},{"t":"On the phone","x":[["Maintenant ou plus tard ?","Now or later?"],["Appel ou message ?","Call or message?"],["Oui ou non ?","Yes or no?"]]},{"t":"Feelings","x":[["Heureux ou triste ?","Happy or sad?"],["Fatigué ou en forme ?","Tired or fit?"],["Calme ou inquiet ?","Calm or worried?"]]},{"t":"Opinions","x":[["Vrai ou faux ?","True or false?"],["D’accord ou pas d’accord ?","Agree or disagree?"],["Un peu ou beaucoup ?","A little or a lot?"]]},{"t":"Plans","x":[["Ce soir ou demain ?","Tonight or tomorrow?"],["Train ou voiture ?","Train or car?"],["Partir ou rester ?","Leave or stay?"]]}]};
+for(var k5 in SCEN5){if(Object.prototype.hasOwnProperty.call(SCEN5,k5))SCEN[k5]=SCEN5[k5];}
+var DIFF5=[["et", "Du pain et du beurre.", "Joins two things: and."], ["avec", "Avec moi. Avec du sucre.", "Together with, or using."], ["sans", "Sans sucre. Sans moi.", "Not with: without."], ["ou", "Thé ou café ?", "A choice: or. No accent, unlike où (where)."]];
+var PQ5=[["Je veux les deux : du pain ___ du beurre.", ["et", "ou", "sans"], 0, "You want both, so “and”: et.", ["“Les deux” means both. Which word joins two things together?", "“Ou” gives a choice of one. Which word joins both?"]], ["Un thé ___ sucre. Je ne veux pas de sucre.", ["avec", "sans", "et"], 1, "No sugar means “without”: sans.", ["“Je ne veux pas de sucre.” Which word means “without”?", "“Avec” would add the sugar. Which word takes it away?"]], ["Je viens ___ toi. Nous venons ensemble.", ["avec", "sans", "ou"], 0, "Together means “with”: avec.", ["“Ensemble” means together. Which word means “with”?", "“Sans” leaves the person out. Which word keeps them in?"]], ["Thé ___ café ? Tu choisis un des deux.", ["et", "ou", "avec"], 1, "Choosing one of two means “or”: ou.", ["“Un des deux” means one of the two. Which word offers a choice?", "“Et” joins both. Which word picks one?"]], ["Elle part ___ moi. Je reste ici.", ["sans", "avec", "et"], 0, "I stay here, so she leaves without me: sans.", ["“Je reste ici.” Is she leaving with me, or without me?", "“Avec” would mean we leave together. Which word means “without”?"]], ["Du riz ___ du poulet. C’est dans la même assiette.", ["avec", "ou", "sans"], 0, "Same plate means together: avec.", ["“La même assiette” means the same plate. Are they together or apart?", "“Sans” takes the chicken away. Which word keeps it with the rice?"]]];
+
+/* ---------- Lesson 6: bonjour, merci, oui, non ---------- */
+var WORDS6=[
+  {id:'bonjour',text:'bonjour',say:'bõ-zhoor',blend:'w_bonjour',mean:'hello, good day',
+   units:[{l:'bon',s:'s_bon',say:'bõ',tip:'Nasal: let the air through your nose. Do not say the n'},{l:'jour',s:'s_jour',say:'zhoor',tip:'Like the s in “measure”, then “oor”. The r is soft and throaty'}],
+   what:'Bonjour means “hello” and “good day”. It is the first word you say when you meet someone or walk into a place. It is polite with everyone.',
+   how:'Say bonjour as you arrive, before you ask for anything. Add a name or a title: Bonjour, Marie. Bonjour, madame. In the evening, say bonsoir.',
+   ex:[{c:'x_bonjour1',fr:'Bonjour !',en:'Hello!',t:'Bonjour !'},{c:'x_bonjour2',fr:'Bonjour, madame.',en:'Hello, madam.',t:'Bonjour, madame.'}],
+   why:'Bonjour opens every conversation. In France, starting with it shows respect, and people answer you more warmly.'},
+  {id:'merci',text:'merci',say:'mehr-see',blend:'w_merci',mean:'thank you',
+   units:[{l:'mer',s:'s_mer',say:'mehr',tip:'Say “mair”, with a soft throaty r'},{l:'ci',s:'s_ci',say:'see',tip:'The c sounds like an s before i'}],
+   what:'Merci means “thank you”. Use it for every small help, a gift, a service, a coffee.',
+   how:'Say merci alone, or add words: merci beaucoup means “thank you very much”. Merci pour ton aide means “thanks for your help”.',
+   ex:[{c:'x_merci1',fr:'Merci !',en:'Thank you!',t:'Merci !'},{c:'x_merci2',fr:'Merci beaucoup.',en:'Thank you very much.',t:'Merci beaucoup.'}],
+   why:'Merci keeps every conversation kind. A few thank-yous a day make you sound polite and warm.'},
+  {id:'oui',text:'oui',say:'wee',blend:'w_oui',mean:'yes',
+   units:[{l:'oui',s:'s_oui',say:'wee',tip:'Three letters, one quick sound: “wee”'}],
+   what:'Oui means “yes”. It is the simple way to agree or to accept.',
+   how:'Say oui alone, or in a short answer: Oui, merci. Oui, bien sûr. Oui, je veux bien.',
+   ex:[{c:'x_oui1',fr:'Oui, merci.',en:'Yes, thank you.',t:'Oui, merci.'},{c:'x_oui2',fr:'Oui, bien sûr.',en:'Yes, of course.',t:'Oui, bien sûr.'}],
+   why:'Oui lets you answer right away. With one short word you can agree, accept and keep the conversation going.'},
+  {id:'non',text:'non',say:'nõ',blend:'w_non',mean:'no',
+   units:[{l:'n',s:'s_n',say:'n',tip:'Tongue behind your top teeth, a steady hum'},{l:'on',s:'s_on',say:'õ',tip:'Nasal: let the air through your nose. Do not say the n'}],
+   what:'Non means “no”. It is the simple way to refuse, or to say that something is not true.',
+   how:'Say non alone, or add something polite: Non, merci means “No, thank you”. Non, pas du tout means “No, not at all”.',
+   ex:[{c:'x_non1',fr:'Non, merci.',en:'No, thank you.',t:'Non, merci.'},{c:'x_non2',fr:'Non, pas du tout.',en:'No, not at all.',t:'Non, pas du tout.'}],
+   why:'Non lets you refuse politely and clearly. With “merci”, it never sounds rude.'}
+];
+var SCEN6={"bonjour":[{"t":"Morning","x":[["Bonjour, tout le monde !","Hello, everyone!"],["Bonjour, comment vas-tu ?","Hello, how are you?"],["Bonjour, bien dormi ?","Hello, did you sleep well?"]]},{"t":"At work","x":[["Bonjour, monsieur.","Hello, sir."],["Bonjour, je suis Paul.","Hello, I'm Paul."],["Bonjour à toute l’équipe.","Hello to the whole team."]]},{"t":"At home","x":[["Bonjour, maman.","Hello, Mum."],["Bonjour, mon chéri.","Hello, darling."],["Bonjour, les enfants !","Hello, children!"]]},{"t":"With a friend","x":[["Bonjour, mon ami !","Hello, my friend!"],["Bonjour, ça fait plaisir de te voir.","Hello, it's nice to see you."],["Bonjour, tu vas bien ?","Hello, are you well?"]]},{"t":"At the shop","x":[["Bonjour, je cherche du pain.","Hello, I'm looking for bread."],["Bonjour, madame. Vous êtes ouvert ?","Hello, madam. Are you open?"],["Bonjour, combien ça coûte ?","Hello, how much is it?"]]},{"t":"Restaurant","x":[["Bonjour, une table pour deux, s’il vous plaît.","Hello, a table for two, please."],["Bonjour, nous avons réservé.","Hello, we have a booking."],["Bonjour, le menu, s’il vous plaît.","Hello, the menu, please."]]},{"t":"On the phone","x":[["Bonjour, c’est Paul à l’appareil.","Hello, it's Paul speaking."],["Bonjour, je vous appelle pour un rendez-vous.","Hello, I'm calling about an appointment."],["Bonjour, vous m’entendez ?","Hello, can you hear me?"]]},{"t":"Feelings","x":[["Bonjour, je suis content de vous voir.","Hello, I'm happy to see you."],["Bonjour, je vais bien, merci.","Hello, I'm fine, thank you."],["Bonjour, je suis un peu fatigué.","Hello, I'm a bit tired."]]},{"t":"Opinions","x":[["Bonjour, je voudrais dire quelque chose.","Hello, I'd like to say something."],["Bonjour, je suis d’accord avec vous.","Hello, I agree with you."],["Bonjour, je ne suis pas sûr.","Hello, I'm not sure."]]},{"t":"Plans","x":[["Bonjour, je voudrais réserver une chambre.","Hello, I'd like to book a room."],["Bonjour, je pars demain.","Hello, I'm leaving tomorrow."],["Bonjour, à quelle heure ouvrez-vous ?","Hello, what time do you open?"]]}],
+"merci":[{"t":"Morning","x":[["Merci pour le café.","Thanks for the coffee."],["Merci, bonne journée !","Thank you, have a good day!"],["Merci de m’avoir réveillé.","Thanks for waking me up."]]},{"t":"At work","x":[["Merci pour ton aide.","Thanks for your help."],["Merci beaucoup, monsieur.","Thank you very much, sir."],["Merci, c’est très clair.","Thank you, that's very clear."]]},{"t":"At home","x":[["Merci pour le repas.","Thanks for the meal."],["Merci de ranger.","Thanks for tidying up."],["Merci, mon chéri.","Thanks, darling."]]},{"t":"With a friend","x":[["Merci d’être là.","Thanks for being here."],["Merci pour ton message.","Thanks for your message."],["Merci, tu es gentil.","Thank you, you're kind."]]},{"t":"At the shop","x":[["Merci, bonne journée.","Thank you, have a good day."],["Merci, je regarde seulement.","Thank you, I'm just looking."],["Merci beaucoup pour votre aide.","Thank you very much for your help."]]},{"t":"Restaurant","x":[["Merci, c’était délicieux.","Thank you, it was delicious."],["Merci, l’addition, s’il vous plaît.","Thank you, the bill, please."],["Merci, c’est parfait.","Thank you, that's perfect."]]},{"t":"On the phone","x":[["Merci de votre appel.","Thank you for your call."],["Merci de me rappeler.","Thanks for calling me back."],["Merci, au revoir.","Thank you, goodbye."]]},{"t":"Feelings","x":[["Merci, ça me touche.","Thank you, that touches me."],["Merci, je suis très content.","Thank you, I'm very happy."],["Merci, ça me fait plaisir.","Thank you, that pleases me."]]},{"t":"Opinions","x":[["Merci pour votre avis.","Thanks for your opinion."],["Merci, je comprends.","Thank you, I understand."],["Merci, vous avez raison.","Thank you, you're right."]]},{"t":"Plans","x":[["Merci pour l’invitation.","Thanks for the invitation."],["Merci, à demain !","Thanks, see you tomorrow!"],["Merci, je viens avec plaisir.","Thanks, I'm coming with pleasure."]]}],
+"oui":[{"t":"Morning","x":[["Oui, j’ai bien dormi.","Yes, I slept well."],["Oui, je suis réveillé.","Yes, I'm awake."],["Oui, un café, merci.","Yes, a coffee, thank you."]]},{"t":"At work","x":[["Oui, je travaille aujourd’hui.","Yes, I'm working today."],["Oui, c’est prêt.","Yes, it's ready."],["Oui, bien sûr.","Yes, of course."]]},{"t":"At home","x":[["Oui, je range.","Yes, I'm tidying up."],["Oui, le repas est prêt.","Yes, the meal is ready."],["Oui, j’arrive.","Yes, I'm coming."]]},{"t":"With a friend","x":[["Oui, je viens avec toi.","Yes, I'm coming with you."],["Oui, moi aussi.","Yes, me too."],["Oui, c’est vrai.","Yes, it's true."]]},{"t":"At the shop","x":[["Oui, c’est ça.","Yes, that's it."],["Oui, je prends celui-ci.","Yes, I'll take this one."],["Oui, avec la carte.","Yes, with the card."]]},{"t":"Restaurant","x":[["Oui, une table pour deux.","Yes, a table for two."],["Oui, avec du sucre.","Yes, with sugar."],["Oui, c’est bon.","Yes, it's good."]]},{"t":"On the phone","x":[["Oui, allô ?","Yes, hello?"],["Oui, je vous entends.","Yes, I can hear you."],["Oui, je suis disponible.","Yes, I'm available."]]},{"t":"Feelings","x":[["Oui, je suis heureux.","Yes, I'm happy."],["Oui, ça va bien.","Yes, I'm fine."],["Oui, ça me fait plaisir.","Yes, that pleases me."]]},{"t":"Opinions","x":[["Oui, tu as raison.","Yes, you're right."],["Oui, je suis d’accord.","Yes, I agree."],["Oui, je pense que oui.","Yes, I think so."]]},{"t":"Plans","x":[["Oui, je veux bien.","Yes, I'd love to."],["Oui, ce soir.","Yes, tonight."],["Oui, à demain.","Yes, see you tomorrow."]]}],
+"non":[{"t":"Morning","x":[["Non, pas encore.","No, not yet."],["Non, merci, pas de café.","No, thank you, no coffee."],["Non, je ne suis pas pressé.","No, I'm not in a hurry."]]},{"t":"At work","x":[["Non, je ne travaille pas aujourd’hui.","No, I'm not working today."],["Non, ce n’est pas prêt.","No, it's not ready."],["Non, pas lundi.","No, not Monday."]]},{"t":"At home","x":[["Non, je ne range pas.","No, I'm not tidying up."],["Non, le repas n’est pas prêt.","No, the meal isn't ready."],["Non, pas maintenant.","No, not now."]]},{"t":"With a friend","x":[["Non, je ne viens pas.","No, I'm not coming."],["Non, pas du tout.","No, not at all."],["Non, c’est faux.","No, that's wrong."]]},{"t":"At the shop","x":[["Non, merci, je regarde seulement.","No, thank you, I'm just looking."],["Non, pas celui-ci.","No, not this one."],["Non, sans sac, merci.","No, without a bag, thank you."]]},{"t":"Restaurant","x":[["Non, merci, sans sucre.","No, thank you, without sugar."],["Non, pas de dessert.","No, no dessert."],["Non, c’est tout.","No, that's all."]]},{"t":"On the phone","x":[["Non, je ne vous entends pas.","No, I can't hear you."],["Non, je ne suis pas disponible.","No, I'm not available."],["Non, vous vous trompez de numéro.","No, you have the wrong number."]]},{"t":"Feelings","x":[["Non, je ne suis pas triste.","No, I'm not sad."],["Non, ça ne va pas.","No, I'm not well."],["Non, je ne suis pas inquiet.","No, I'm not worried."]]},{"t":"Opinions","x":[["Non, je ne suis pas d’accord.","No, I don't agree."],["Non, je ne pense pas.","No, I don't think so."],["Non, pas du tout.","No, not at all."]]},{"t":"Plans","x":[["Non, pas ce soir.","No, not tonight."],["Non, je ne pars pas.","No, I'm not leaving."],["Non, je préfère rester.","No, I prefer to stay."]]}]};
+for(var k6 in SCEN6){if(Object.prototype.hasOwnProperty.call(SCEN6,k6))SCEN[k6]=SCEN6[k6];}
+var DIFF6=[["bonjour", "Bonjour, madame.", "Hello. Say it when you arrive. In the evening: bonsoir."], ["merci", "Merci beaucoup.", "Thank you. Say it for any help."], ["oui", "Oui, bien sûr.", "Yes: you agree or accept."], ["non", "Non, merci.", "No: you refuse politely."]];
+var PQ6=[["Tu arrives le matin. Tu dis : ___ !", ["Bonjour", "Merci", "Non"], 0, "Arriving means “hello”: bonjour.", ["You meet someone in the morning. Which word means “hello”?", "“Merci” says thank you. Which word starts a conversation?"]], ["Tu reçois un cadeau. Tu dis : ___ !", ["Bonjour", "Merci", "Non"], 1, "A gift means “thank you”: merci.", ["Someone gives you something nice. Which word means “thank you”?", "“Bonjour” is for arriving. Which word is for thanking?"]], ["Tu veux accepter. Tu dis : ___, avec plaisir.", ["Oui", "Non", "Bonjour"], 0, "Accepting means “yes”: oui.", ["You want to accept. Which word means “yes”?", "“Non” refuses. Which word agrees?"]], ["Tu ne veux pas de sucre. Tu dis : ___, merci.", ["Oui", "Non", "Bonjour"], 1, "Refusing means “no”: non.", ["You do not want sugar. Which word means “no”?", "“Oui” accepts. Which word refuses?"]], ["On te donne ton café. Tu dis : ___ !", ["Merci", "Non", "Bonjour"], 0, "Receiving your coffee means “thank you”: merci.", ["Someone hands you your coffee. Which word means “thank you”?", "“Non” would refuse the coffee. Which word is polite here?"]], ["On te demande : « Tu es fatigué ? » Tu ne l’es pas. Tu dis : ___, ça va.", ["Oui", "Non", "Merci"], 1, "You are not tired, so “no”: non.", ["You are not tired. Which word means “no”?", "“Oui” would mean you are tired. Which word says the opposite?"]]];
+var LESSONS=[WORDS,WORDS2,WORDS3,WORDS4,WORDS5,WORDS6];
+var LTITLES=['Lesson 1: Me and mine','Lesson 2: You and yours','Lesson 3: Him, her and us','Lesson 4: His, her and their','Lesson 5: Joining words','Lesson 6: Everyday words'];
+var LDIFF=[DIFF,DIFF2,DIFF3,DIFF4,DIFF5,DIFF6],LPQ=[PQ,PQ2,PQ3,PQ4,PQ5,PQ6];
+var lessonI=0;
+var TITLES=['Débutant','Curieux','Parleur','Causeur','Conteur','Orateur','Maître','Virtuose','Légende','Polyglotte'];
+var TIPS=[
+  'Say it out loud, not in your head. Your mouth needs the practice.',
+  'French is smooth. Join the sounds, do not chop them.',
+  'Most final consonants are silent. The n in mon is a good example.',
+  'Round your lips for the e in je.',
+  'Little and often beats long and rare. Five minutes a day.',
+  'Copy the melody of the voice, not just the words.',
+  'Record yourself once a week and listen back.'
+];
+var QUESTS=[{id:'s1',name:'Say your first word aloud',xp:20},{id:'s2',name:'Say all four words today',xp:40},{id:'tip',name:'Read today’s tip',xp:10}];
+var BADGES=[
+  {id:'bje',label:'je',name:'First word',desc:'Say je aloud',test:function(){return (S.said.je||0)>=1;}},
+  {id:'bmoi',label:'moi',name:'Moi!',desc:'Say moi aloud',test:function(){return (S.said.moi||0)>=1;}},
+  {id:'bmon',label:'mon',name:'Mon',desc:'Say mon aloud',test:function(){return (S.said.mon||0)>=1;}},
+  {id:'bma',label:'ma',name:'Ma',desc:'Say ma aloud',test:function(){return (S.said.ma||0)>=1;}},
+  {id:'l1',label:'L1',name:'Lesson 1',desc:'Say all four words in one day',test:function(){return S.lessons>=1;}},
+  {id:'s3',label:'3d',name:'Three in a row',desc:'Reach a 3 day streak',test:function(){return S.longest>=3;}},
+  {id:'s7',label:'7d',name:'Full week',desc:'Reach a 7 day streak',test:function(){return S.longest>=7;}},
+  {id:'s30',label:'30d',name:'Habit built',desc:'Reach a 30 day streak',test:function(){return S.longest>=30;}},
+  {id:'x25',label:'25',name:'Chatterbox',desc:'Say words aloud 25 times',test:function(){return S.reps>=25;}},
+  {id:'x100',label:'100',name:'Flow',desc:'Say words aloud 100 times',test:function(){return S.reps>=100;}},
+  {id:'l5',label:'L5',name:'Causeur',desc:'Reach level 5',test:function(){return levelOf(S.xp)>=5;}},
+  {id:'early',label:'AM',name:'Early bird',desc:'Say a word before 9:00',test:function(){return !!S.earlyDone;}}
+];
+var SLIDES=[
+  {art:ART_SEE,t:'See it',p:'Every word comes with a dot under each sound. Tap a dot to hear that sound on its own.',n:''},
+  {art:ART_BLEND,t:'Hear it blend',p:'Listen as the sounds play one by one, then join into the word. Tap the bracket to hear the word.',n:''},
+  {art:ART_SAY,t:'Say it out loud',p:'After you listen, say it. A little every day and the words stack up into real French.',n:'Speak even if it feels silly. Your mouth learns French by doing.'}
+];
+
+/* ---------- state ---------- */
+var KEY='motamot:v1';
+function defaults(){return {xp:0,streak:0,longest:0,lastDay:null,said:{},reps:0,lessons:0,history:{},badges:{},quests:{},day:null,earlyDone:false,intro:false,slow:false,cap:false,start:null};}
+function load(){
+  var d=defaults();
+  try{var r=localStorage.getItem(KEY);if(r){var o=JSON.parse(r);for(var k in o){if(Object.prototype.hasOwnProperty.call(o,k))d[k]=o[k];}}}catch(e){}
+  return d;
+}
+var S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+/* ---------- helpers ---------- */
+function pad2(n){return (n<10?'0':'')+n;}
+function dkey(d){return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
+function today(){return dkey(new Date());}
+function addDays(d,n){var x=new Date(d.getTime());x.setDate(x.getDate()+n);return x;}
+function need(n){return 50*n*(n-1);}
+function levelOf(xp){var n=1;while(xp>=need(n+1))n++;return n;}
+function titleOf(n){return TITLES[Math.min(n,TITLES.length)-1];}
+function lvlPct(xp){var n=levelOf(xp),lo=need(n),hi=need(n+1);return (xp-lo)/(hi-lo);}
+function liveStreak(){
+  if(!S.lastDay)return 0;
+  var t=today(),y=dkey(addDays(new Date(),-1));
+  return (S.lastDay===t||S.lastDay===y)?S.streak:0;
+}
+function dayState(){
+  var t=today();
+  if(!S.day||S.day.d!==t)S.day={d:t,said:{},xp:0,lesson:false,parts:[]};
+  return S.day;
+}
+function setT(el,v){if(el._v!==v){el._v=v;el.textContent=v;}}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function wait(ms){return new Promise(function(r){setTimeout(r,ms);});}
+var toastTimer=0;
+function toast(msg){
+  var t=$('#toast');t.textContent=msg;t.hidden=false;
+  clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true;},2600);
+}
+
+/* ---------- day travel ---------- */
+/* back = how many days before today we are looking at (0 = today). The lesson follows the date:
+   day 1 of use = lesson 1, day 2 = lesson 2, and so on (the last lesson repeats until a new one exists). */
+var back=0;
+function keyNum(k){var p=k.split('-');return Math.round(Date.UTC(+p[0],+p[1]-1,+p[2])/864e5);}
+function startKey(){
+  if(!S.start){
+    var ks=Object.keys(S.history).sort();
+    S.start=(ks.length&&ks[0]<today())?ks[0]:today();
+    save();
+  }
+  return S.start;
+}
+function viewDate(){return addDays(new Date(),-back);}
+function setLesson(){
+  var i=keyNum(dkey(viewDate()))-keyNum(startKey());
+  lessonI=Math.max(0,Math.min(LESSONS.length-1,i));
+  WORDS=LESSONS[lessonI];DIFF=LDIFF[lessonI]||DIFF;PQ=LPQ[lessonI]||PQ;
+}
+
+/* ---------- audio (Fixed & Optimized) ---------- */
+var voice=null;
+function synth(){try{return window.speechSynthesis||null;}catch(e){return null;}}
+function Utt(){try{return window.SpeechSynthesisUtterance||window.webkitSpeechSynthesisUtterance||null;}catch(e){return null;}}
+function pickVoice(){
+  try{
+    var s = synth();
+    if(!s) return;
+    var vs=(s.getVoices()||[]).filter(function(v){return /^fr/i.test(v.lang);});
+    voice=vs.filter(function(v){return /fr-FR/i.test(v.lang);})[0]||vs[0]||null;
+  }catch(e){voice=null;}
+}
+if(synth()){
+  pickVoice();
+  if(synth().onvoiceschanged !== undefined){
+    synth().onvoiceschanged = pickVoice;
+  }
+}
+
+function ensureAudio(){
+  if(synth() && synth().paused){try{synth().resume();}catch(e){}}
+  return Promise.resolve();
+}
+
+function stopAudio(){
+  try{if(window.speechSynthesis)speechSynthesis.cancel();}catch(e){}
+}
+
+function speakAsync(text){
+  return new Promise(function(resolve){
+    var s = synth(), U = Utt();
+    if(!s || !U){
+      toast('Speech is not supported in this browser.');
+      resolve(false);
+      return;
+    }
+    try {
+      s.cancel();
+      var u = new U(text);
+      u.lang = 'fr-FR';
+      if(!voice) pickVoice();
+      if(voice) u.voice = voice;
+      u.rate = S.slow ? 0.6 : 0.8;
+      
+      u.onend = function(){ resolve(true); };
+      u.onerror = function(){ resolve(false); };
+      
+      // Safety timeout fallback if onend fails to trigger on some platforms
+      var tm = setTimeout(function(){ resolve(true); }, 4000);
+      
+      s.speak(u);
+    } catch(e) {
+      resolve(false);
+    }
+  });
+}
+function speakNative(text){stopAudio();return speakAsync(text);}
+
+/* ---------- the word component ---------- */
+function unitLetters(w,k){
+  var l=w.units[k].l;
+  return (S.cap&&k===0)?l.charAt(0).toUpperCase()+l.slice(1):l;
+}
+function wordHTML(w){
+  var u=w.units.map(function(x,k){
+    return '<div class="unit'+(x.l.length>1?' multi':'')+'"><span class="letters">'+esc(unitLetters(w,k))+'</span><span class="dotline"><span class="dot" data-u="'+k+'"></span></span><span class="say">'+esc(x.say)+'</span></div>';
+  }).join('');
+  var shown=S.cap?w.text.charAt(0).toUpperCase()+w.text.slice(1):w.text;
+  var nl=w.units.reduce(function(a,x){return a+x.l.length;},0),kk=Math.min(1,4.6/nl).toFixed(2);
+  return '<div class="wordrow" style="--k:'+kk+'">'+u+'</div><div class="blendwrap"><span class="bracket"></span><button class="blendbtn" data-blend="1" aria-label="Hear '+esc(w.text)+'">'+I.play+'<span class="bw">'+esc(shown)+'</span><span class="bs">'+esc(w.say)+'</span></button></div>';
+}
+function setOn(root,k,on){
+  var d=$('.dot[data-u="'+k+'"]',root);if(!d)return;
+  d.classList.toggle('on',on);if(!on)d.classList.add('done');
+}
+function clearMarks(root){
+  $$('.dot',root).forEach(function(d){d.classList.remove('on','done');});
+  var b=$('.blendbtn',root);if(b)b.classList.remove('on');
+}
+function lightWord(root,on){
+  $$('.dot',root).forEach(function(d){d.classList.toggle('on',on);d.classList.remove('done');});
+  var bb=$('.blendbtn',root);if(bb)bb.classList.toggle('on',on);
+}
+async function listen(w,root){
+  stopAudio();clearMarks(root);
+  lightWord(root,true);
+  var ok=await speakAsync(w.text);
+  lightWord(root,false);
+  return ok;
+}
+async function playBlend(w,root){listen(w,root);}
+function bindWord(root,getWord,onHeard){
+  root.addEventListener('click',function(e){
+    var w=getWord();
+    if(e.target.closest('.blendbtn'))playBlend(w,root);
+  });
+}
+
+/* ---------- XP, badges ---------- */
+function checkBadges(){
+  var got=[];
+  BADGES.forEach(function(b){
+    if(!S.badges[b.id]&&b.test()){S.badges[b.id]=today();got.push(b);}
+  });
+  return got;
+}
+function hexSvg(b){
+  return '<svg viewBox="0 0 64 72" class="hex" aria-hidden="true"><path d="M32 3L59 18.5v35L32 69 5 53.5v-35z"/><text x="32" y="43" text-anchor="middle">'+esc(b.label)+'</text></svg>';
+}
+var cur=0,heard=false;
+function nextIndex(){
+  var d=dayState(),i;
+  for(i=0;i<WORDS.length;i++){if(!d.said[WORDS[i].id])return i;}
+  return 0;
+}
+function saidWord(){
+  if(back>0)return; /* past days are review only: no XP, no streak */
+  var w=WORDS[cur],t=today(),d=dayState(),now=new Date(),lb=levelOf(S.xp),gain=0;
+  var firstToday=!d.said[w.id];
+  S.said[w.id]=(S.said[w.id]||0)+1;S.reps++;
+  var wx=firstToday?20:2;gain+=wx;d.parts.push([firstToday?'Said '+w.text:'Practised '+w.text,wx]);
+  d.said[w.id]=true;
+  if(S.lastDay!==t){
+    S.streak=(S.lastDay===dkey(addDays(now,-1)))?S.streak+1:1;
+    S.longest=Math.max(S.longest,S.streak);S.lastDay=t;
+    var sb=Math.min(S.streak,7)*10;gain+=sb;d.parts.push(['Streak bonus, day '+S.streak,sb]);
+  }
+  var h=S.history[t]||{s:0,xp:0};h.s++;S.history[t]=h;
+  if(now.getHours()<9)S.earlyDone=true;
+  var n=Object.keys(d.said).length,q={},old=S.quests[t]||{},k;
+  for(k in old){if(Object.prototype.hasOwnProperty.call(old,k))q[k]=old[k];}
+  if(n>=1&&!q.s1){q.s1=true;gain+=QUESTS[0].xp;d.parts.push(['Quest: '+QUESTS[0].name,QUESTS[0].xp]);}
+  var lessonDone=false;
+  if(n>=WORDS.length&&!d.lesson){
+    d.lesson=true;S.lessons++;lessonDone=true;gain+=50;d.parts.push(['Lesson '+(lessonI+1)+' complete',50]);
+    if(!q.s2){q.s2=true;gain+=QUESTS[1].xp;d.parts.push(['Quest: '+QUESTS[1].name,QUESTS[1].xp]);}
+  }
+  S.quests={};S.quests[t]=q;
+  S.xp+=gain;d.xp+=gain;h.xp=(h.xp||0)+gain;
+  var nb=checkBadges();save();
+  var la=levelOf(S.xp);
+  if(lessonDone){showResults(lb,la,nb);}
+  else{
+    toast('+'+gain+' XP'+(la>lb?'. Level up!':''));
+    if(nb.length)setTimeout(function(){toast('Badge: '+nb[0].name);},1800);
+    cur=nextIndex();heard=false;
+  }
+  renderAll();
+}
+
+/* ---------- results ---------- */
+function showResults(lb,la,newBadges){
+  var d=dayState(),rows='',total=0;
+  d.parts.forEach(function(p){rows+='<li><span>'+esc(p[0])+'</span><b>+'+p[1]+'</b></li>';total+=p[1];});
+  var h='<div class="kick">Lesson complete</div>';
+  h+='<div class="big-xp num">+'+total+'<small>XP today</small></div>';
+  h+='<div class="card"><ul class="rows">'+rows+'</ul></div>';
+  h+='<div class="card"><div class="row"><b>Level '+la+', '+esc(titleOf(la))+'</b><span class="small-note num">'+S.xp+' / '+need(la+1)+' XP</span></div><div class="lvbar" style="margin-top:10px"><i id="resBar" style="width:'+Math.round((lb===la?Math.max(0,lvlPct(Math.max(need(la),S.xp-d.xp))):0)*100)+'%"></i></div></div>';
+  if(la>lb)h+='<div class="banner">Level up! '+esc(titleOf(la))+'<small>You reached level '+la+'.</small></div>';
+  h+='<div class="card row"><span style="display:flex;align-items:center;gap:8px"><span class="chip flame" style="border:0;padding:0;background:none"><span data-i="flame"></span></span><b>'+S.streak+' day streak</b></span><span class="small-note">Come back tomorrow</span></div>';
+  if(newBadges.length){
+    h+='<div class="card"><h2>New badges</h2><div class="newb" style="margin-top:12px">';
+    newBadges.forEach(function(b){h+='<div class="bd got">'+hexSvg(b)+'<small>'+esc(b.name)+'</small></div>';});
+    h+='</div></div>';
+  }
+  h+='<button class="btn main" id="doneBtn">Done</button>';
+  $('#resIn').innerHTML=h;
+  $$('[data-i]',$('#resIn')).forEach(function(e){e.innerHTML=I[e.dataset.i];});
+  $('#results').hidden=false;document.body.style.overflow='hidden';$('#results').scrollTop=0;
+  $('#doneBtn').addEventListener('click',function(){
+    $('#results').hidden=true;$('#confetti').hidden=true;document.body.style.overflow='';
+    cur=0;heard=false;renderAll();showView('today');
+  });
+  setTimeout(function(){var b=$('#resBar');if(b)b.style.width=Math.round(lvlPct(S.xp)*100)+'%';},120);
+  confetti();
+}
+function confetti(){
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  var c=$('#confetti'),cs=getComputedStyle(document.documentElement);
+  c.hidden=false;c.width=c.clientWidth;c.height=c.clientHeight;
+  var ctx=c.getContext('2d'),cols=['--accent','--xp','--squeeze','--calm'].map(function(v){return cs.getPropertyValue(v).trim()||'#888';});
+  var ps=[],i;
+  for(i=0;i<110;i++){ps.push({x:c.width/2+(Math.random()-.5)*80,y:c.height*.3,vx:(Math.random()-.5)*9,vy:-Math.random()*10-3,s:4+Math.random()*5,c:cols[i%cols.length],r:Math.random()*6});}
+  var t0=performance.now();
+  (function f(now){
+    var el=(now-t0)/1000;
+    ctx.clearRect(0,0,c.width,c.height);
+    ps.forEach(function(p){p.vy+=.28;p.x+=p.vx;p.y+=p.vy;p.r+=.2;ctx.globalAlpha=Math.max(0,1-el/2.4);ctx.fillStyle=p.c;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);ctx.restore();});
+    if(el<2.4)requestAnimationFrame(f);else{ctx.clearRect(0,0,c.width,c.height);c.hidden=true;}
+  })(t0);
+}
+
+/* ---------- rendering ---------- */
+function weekKeys(){
+  var n=new Date(),dow=(n.getDay()+6)%7,mon=addDays(n,-dow),a=[],i;
+  for(i=0;i<7;i++)a.push(dkey(addDays(mon,i)));
+  return a;
+}
+function setSwitch(el,on){el.setAttribute('aria-checked',on?'true':'false');}
+function renderTop(){setT($('#chipStreak'),String(liveStreak()));setT($('#chipXp'),String(S.xp));}
+function renderToday(){
+  var t=today(),d=dayState(),w=WORDS[cur],rv=back>0;
+  $('#v-today').classList.toggle('review',rv);
+  $('#dateLine').textContent=viewDate().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+  $('#dPrev').disabled=keyNum(dkey(viewDate()))<=keyNum(startKey());
+  $('#dNext').disabled=!rv;
+  $('#lessonPill').textContent=(LTITLES[lessonI]||('Lesson '+(lessonI+1)))+(rv?' · Review':'');
+  var n=Object.keys(d.said).length;
+  $('#wordCount').textContent=rv?'':n+' of '+WORDS.length+' today';
+  $('#path').innerHTML=WORDS.map(function(x,i){
+    return '<button class="pchip'+(i===cur?' cur':'')+'" data-w="'+i+'">'+((!rv&&d.said[x.id])?I.check:'')+esc(x.text)+'</button>';
+  }).join('');
+  $('#todayWord').innerHTML=wordHTML(w);
+  $('#mean').innerHTML='<b>'+esc(S.cap?w.text.charAt(0).toUpperCase()+w.text.slice(1):w.text)+'</b> means “'+esc(w.mean)+'”';
+  var lb=$('#listenBtn'),sb=$('#saidBtn');
+  lb.textContent=heard?'Listen again':'Listen';
+  lb.className='btn '+((heard&&!rv)?'heroghost':'start');
+  sb.hidden=rv;
+  sb.disabled=!heard;sb.className='btn '+(heard?'start':'heroghost');
+  sb.textContent=heard?'I said it out loud':'Listen first, then say it';
+  setSwitch($('#swSlow'),S.slow);setSwitch($('#swCap'),S.cap);
+  var q=S.quests[t]||{},html='',doneN=0;
+  QUESTS.forEach(function(x){
+    var dn=!!q[x.id];if(dn)doneN++;
+    html+='<div class="quest'+(dn?' done':'')+'"><span class="qcheck">'+I.check+'</span><span class="qname">'+esc(x.name)+'</span><span class="qxp">+'+x.xp+'</span></div>';
+  });
+  $('#quests').innerHTML=html;
+  $('#questTotal').textContent=doneN+' of '+QUESTS.length;
+  var keys=weekKeys(),L=['M','T','W','T','F','S','S'],wk='',cnt=0;
+  keys.forEach(function(k,i){
+    var dn=!!S.history[k]&&S.history[k].s>0;if(dn)cnt++;
+    wk+='<div class="day'+(dn?' done':'')+(k===t?' today':'')+'"><span>'+L[i]+'</span><span class="dotw">'+I.check+'</span></div>';
+  });
+  $('#week').innerHTML=wk;
+  $('#weekCount').textContent=cnt+' of 7 days';
+  var nd=new Date(),dayN=Math.floor(new Date(nd.getFullYear(),nd.getMonth(),nd.getDate()).getTime()/864e5);
+  $('#tipText').textContent=TIPS[dayN%TIPS.length];
+  var read=!!q.tip;
+  $('#tipBtn').disabled=read;$('#tipBtn').textContent=read?'Read today':'Got it, +10 XP';
+}
+var learnIdx=0;
+
+var scIdx=0,pqI=0,pqTry=0,pqScore=0;
+function addXp(n,label){
+  var lb=levelOf(S.xp),d=dayState(),t=today();
+  S.xp+=n;d.xp+=n;
+  var h=S.history[t]||{s:0,xp:0};h.xp=(h.xp||0)+n;S.history[t]=h;
+  d.parts.push([label,n]);save();renderTop();
+  if(levelOf(S.xp)>lb)toast('Level up! +'+n+' XP');
+}
+function renderReal(){
+  var w=WORDS[learnIdx],list=SCEN[w.id]||[];scIdx=Math.min(scIdx,list.length-1);
+  var sc=list[scIdx];
+  $('#lReal').innerHTML='<div class="kick">In real life</div><h2>'+esc(w.text)+' in 10 situations</h2>'+
+    '<div class="scs">'+list.map(function(x,i){return '<button class="sc" data-sc="'+i+'" aria-pressed="'+(i===scIdx)+'">'+esc(x.t)+'</button>';}).join('')+'</div>'+
+    '<div>'+sc.x.map(function(e,i){return '<div class="ex"><button class="exbtn" data-real="'+i+'" aria-label="Hear '+esc(e[0])+'">'+I.play+'</button><div><div class="exfr">'+esc(e[0])+'</div><div class="exen">'+esc(e[1])+'</div></div></div>';}).join('')+'</div>';
+}
+function diffTitle(){
+  var n=WORDS.map(function(x,i){return i?x.text:x.text.charAt(0).toUpperCase()+x.text.slice(1);});
+  return n.slice(0,-1).join(', ')+' or '+n[n.length-1]+'?';
+}
+function renderDiff(){
+  $('#lDiff').innerHTML='<div class="kick">The difference</div><h2>'+diffTitle()+'</h2>'+DIFF.map(function(r){
+    return '<div class="dfrow"><b>'+esc(r[0])+'</b><div><div class="exfr">'+esc(r[1])+'</div><div class="exen">'+esc(r[2])+'</div></div></div>';}).join('');
+}
+function renderPractice(){
+  var el=$('#lPractice');
+  if(pqI>=PQ.length){
+    el.innerHTML='<div class="kick">Practice</div><h2>'+pqScore+' of '+PQ.length+' on the first try</h2><p>'+(pqScore===PQ.length?'Perfect. You know the difference.':'Try again to get them all first time.')+'</p><button class="btn main" id="pqAgain" style="margin-top:12px">Start again</button>';
+    return;
+  }
+  var q=PQ[pqI];
+  el.innerHTML='<div class="kick">Practice · '+(pqI+1)+' of '+PQ.length+'</div><div class="pq">'+esc(q[0])+'</div><div class="pbtns">'+
+    q[1].map(function(o,i){return '<button class="btn" data-pq="'+i+'">'+esc(o)+'</button>';}).join('')+'</div><p class="pfb" id="pfb"></p>';
+}
+function answerPractice(i){
+  var q=PQ[pqI],btns=$$('#lPractice [data-pq]');
+  if(i===q[2]){
+    btns[i].classList.add('ok');btns.forEach(function(b){b.disabled=true;});
+    if(pqTry===0){pqScore++;var t=today(),d=dayState();d.pq=d.pq||{};if(!d.pq[pqI]){d.pq[pqI]=1;addXp(5,'Practice');}}
+    $('#pfb').innerHTML='<b>Good!</b> '+esc(q[3]);
+    var nb=document.createElement('button');nb.className='btn main';nb.style.marginTop='10px';nb.textContent=pqI<PQ.length-1?'Next':'See result';
+    nb.onclick=function(){pqI++;pqTry=0;renderPractice();};$('#lPractice').appendChild(nb);
+    speakNative(q[0].replace('___',q[1][q[2]]));
+  }else{
+    pqTry++;btns[i].classList.add('bad');btns[i].disabled=true;$('#pfb').textContent=q[4][Math.min(pqTry-1,1)];
+  }
+}
+function renderLearn(){
+  var w=WORDS[learnIdx];
+  $('#wchips').innerHTML=WORDS.map(function(x,i){return '<button class="wchip" data-l="'+i+'" aria-pressed="'+(i===learnIdx)+'">'+esc(x.text)+'</button>';}).join('');
+  $('#learnWord').innerHTML=wordHTML(w);
+  $('#soundTips').innerHTML=w.units.map(function(u){return '<div class="tiprow"><b>'+esc(u.l)+'</b><span>'+esc(u.tip)+'</span></div>';}).join('');
+  $('#lWhat').innerHTML='<div class="kick">What</div><h2>'+esc(w.text)+' means “'+esc(w.mean)+'”</h2><p>'+esc(w.what)+'</p>';
+  var ex=w.ex.map(function(e,i){
+    return '<div class="ex"><button class="exbtn" data-ex="'+i+'" aria-label="Hear '+esc(e.fr)+'">'+I.play+'</button><div><div class="exfr">'+esc(e.fr)+'</div><div class="exen">'+esc(e.en)+'</div></div></div>';
+  }).join('');
+  $('#lHow').innerHTML='<div class="kick">How to use it</div><h2>Put it to work</h2><p>'+esc(w.how)+'</p><div>'+ex+'</div>';
+  renderReal();renderDiff();renderPractice();
+  $('#lWhy').innerHTML='<div class="kick">Why</div><h2>What it does for you</h2><p>'+esc(w.why)+'</p>';
+}
+function renderProgress(){
+  var n=levelOf(S.xp),pct=lvlPct(S.xp),C=276.46;
+  $('#lvNum').textContent=n;
+  $('#lvTitle').textContent=titleOf(n);
+  $('#lvSub').textContent=(need(n+1)-S.xp)+' XP to level '+(n+1);
+  $('#lvFill').style.strokeDashoffset=(C*(1-pct)).toFixed(2);
+  $('#stWords').textContent=WORDS.filter(function(w){return (S.said[w.id]||0)>=1;}).length+' / '+WORDS.length;
+  $('#stReps').textContent=S.reps;
+  $('#stBest').textContent=S.longest;
+  $('#stLessons').textContent=S.lessons;
+  var n0=new Date(),dow=(n0.getDay()+6)%7,start=addDays(n0,-dow-28),h='',i,t=today();
+  for(i=0;i<35;i++){
+    var dd=addDays(start,i),k=dkey(dd),e=S.history[k],c=e?(e.s>=4?' l2':(e.s>=1?' l1':'')):'';
+    if(k>t)c+=' future';
+    h+='<i class="'+c.trim()+'" title="'+k+'"></i>';
+  }
+  $('#heat').innerHTML=h;
+  var b='',cnt=0;
+  BADGES.forEach(function(x){
+    var got=!!S.badges[x.id];if(got)cnt++;
+    b+='<button class="bd'+(got?' got':'')+'" data-b="'+x.id+'">'+hexSvg(x)+'<small>'+esc(x.name)+'</small></button>';
+  });
+  $('#badges').innerHTML=b;
+  $('#badgeCount').textContent=cnt+' of '+BADGES.length;
+}
+function renderAll(){renderTop();renderToday();renderLearn();renderProgress();}
+function showView(v){
+  ['today','learn','progress'].forEach(function(x){$('#v-'+x).hidden=(x!==v);});
+  $$('.tab').forEach(function(t){t.setAttribute('aria-selected',t.dataset.view===v?'true':'false');});
+  stopAudio();clearMarks($('#todayWord'));clearMarks($('#learnWord'));
+  window.scrollTo(0,0);
+}
+function goDay(n){
+  var nb=back+n;
+  if(nb<0)return;
+  if(keyNum(dkey(addDays(new Date(),-nb)))<keyNum(startKey()))return;
+  stopAudio();back=nb;setLesson();
+  cur=back?0:nextIndex();heard=false;learnIdx=0;scIdx=0;pqI=0;pqTry=0;pqScore=0;
+  renderAll();
+}
+
+/* ---------- intro ---------- */
+var introI=0;
+function renderIntro(){
+  var s=SLIDES[introI];
+  $('#introArt').innerHTML=s.art;
+  $('#introTitle').textContent=s.t;
+  $('#introText').textContent=s.p;
+  $('#introNote').textContent=s.n;
+  $('#introDots').innerHTML=SLIDES.map(function(_,i){return '<i class="'+(i===introI?'on':'')+'"></i>';}).join('');
+  $('#introNext').textContent=(introI===SLIDES.length-1)?'Start with je':'Next';
+}
+function openIntro(){introI=0;$('#intro').hidden=false;document.body.style.overflow='hidden';renderIntro();}
+function closeIntro(){
+  S.intro=true;save();$('#intro').hidden=true;document.body.style.overflow='';showView('today');
+}
+
+/* ---------- events ---------- */
+function bind(){
+  $$('[data-i]').forEach(function(e){e.innerHTML=I[e.dataset.i];});
+  $('#learnArt').innerHTML=ART_BLEND;
+  $$('.tab').forEach(function(t){t.addEventListener('click',function(){showView(t.dataset.view);});});
+  $('#dPrev').addEventListener('click',function(){goDay(1);});
+  $('#dNext').addEventListener('click',function(){goDay(-1);});
+  bindWord($('#todayWord'),function(){return WORDS[cur];});
+  bindWord($('#learnWord'),function(){return WORDS[learnIdx];});
+  $('#path').addEventListener('click',function(e){
+    var b=e.target.closest('.pchip');if(!b)return;
+    stopAudio();cur=+b.dataset.w;heard=false;renderToday();
+  });
+  $('#listenBtn').addEventListener('click',function(){
+    var w=WORDS[cur];
+    ensureAudio().then(function(){
+      listen(w,$('#todayWord')).then(function(ok){
+        if(ok&&!heard){heard=true;renderToday();}
+      });
+    });
+  });
+  $('#saidBtn').addEventListener('click',function(){if(heard){stopAudio();saidWord();}});
+  $('#swSlow').addEventListener('click',function(){S.slow=!S.slow;save();renderToday();});
+  $('#swCap').addEventListener('click',function(){S.cap=!S.cap;save();renderToday();renderLearn();});
+  $('#nativeBtn').addEventListener('click',function(){ensureAudio().then(function(){speakNative(WORDS[cur].text);});});
+  $('#lReal').addEventListener('click',function(e){
+    var c=e.target.closest('.sc');
+    if(c){scIdx=+c.dataset.sc;stopAudio();renderReal();return;}
+    var b=e.target.closest('[data-real]');if(!b)return;
+    var row=b.closest('.ex'),x=SCEN[WORDS[learnIdx].id][scIdx].x[+b.dataset.real];
+    $$('#lReal .ex').forEach(function(r){r.classList.remove('playing');});row.classList.add('playing');
+    ensureAudio().then(function(){
+      speakNative(x[0]).then(function(){row.classList.remove('playing');});
+    });
+  });
+  $('#lPractice').addEventListener('click',function(e){
+    var b=e.target.closest('[data-pq]');if(b){answerPractice(+b.dataset.pq);return;}
+    if(e.target.id==='pqAgain'){pqI=0;pqTry=0;pqScore=0;renderPractice();}
+  });
+  $('#wchips').addEventListener('click',function(e){
+    var b=e.target.closest('.wchip');if(!b)return;
+    stopAudio();scIdx=0;learnIdx=+b.dataset.l;renderLearn();
+  });
+  $('#v-learn').addEventListener('click',function(e){
+    var b=e.target.closest('.exbtn');if(!b||b.dataset.ex===undefined)return;
+    var ex=WORDS[learnIdx].ex[+b.dataset.ex];
+    ensureAudio().then(function(){
+      stopAudio();
+      speakNative(ex.t);
+    });
+  });
+  $('#tipBtn').addEventListener('click',function(){
+    var t=today(),q=S.quests[t]||{};
+    if(q.tip)return;
+    var lb=levelOf(S.xp),d=dayState();q.tip=true;S.quests={};S.quests[t]=q;S.xp+=10;d.xp+=10;
+    var h=S.history[t]||{s:0,xp:0};h.xp=(h.xp||0)+10;S.history[t]=h;
+    d.parts.push(['Quest: '+QUESTS[2].name,10]);
+    save();renderAll();
+    toast(levelOf(S.xp)>lb?'Level up! +10 XP':'+10 XP');
+  });
+  $('#badges').addEventListener('click',function(e){
+    var b=e.target.closest('.bd');if(!b)return;
+    var x=BADGES.filter(function(y){return y.id===b.dataset.b;})[0];
+    $('#bdDetail').textContent=S.badges[x.id]?x.name+': '+x.desc+'. Earned '+S.badges[x.id]+'.':x.name+': '+x.desc+'.';
+  });
+  var rs=$('#resetBtn');
+  rs.addEventListener('click',function(){
+    if(rs.dataset.armed==='1'){S=defaults();S.intro=true;save();rs.dataset.armed='0';rs.textContent='Reset progress';back=0;setLesson();cur=0;heard=false;renderAll();toast('Progress reset');}
+    else{rs.dataset.armed='1';rs.textContent='Tap again to erase everything';setTimeout(function(){rs.dataset.armed='0';rs.textContent='Reset progress';},4000);}
+  });
+  $('#introNext').addEventListener('click',function(){
+    ensureAudio();
+    if(introI<SLIDES.length-1){introI++;renderIntro();}else closeIntro();
+  });
+  $('#introSkip').addEventListener('click',closeIntro);
+}
+setLesson();
+cur=nextIndex();
+bind();
+renderAll();
+if(!S.intro)openIntro();
+})();
+</script>
+
+</body></html>
