@@ -1,8 +1,8 @@
 /* Mot à Mot service worker: the app works offline after the first visit.
    Bump VERSION whenever index.html changes so installed copies refresh. */
-const VERSION = 'motamot-v26';
-const CORE = ['./', './index.html', './manifest.webmanifest',
-  './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
+const VERSION = 'motamot-v26c';
+const CORE = ['./', './index.html', './manifest.json',
+  './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
